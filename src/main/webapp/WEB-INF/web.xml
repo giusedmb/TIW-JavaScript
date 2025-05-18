@@ -11,11 +11,11 @@
     </context-param>
     <context-param>
         <param-name>dbUser</param-name>
-        <param-value>giuse</param-value>
+        <param-value>giacomo</param-value>
     </context-param>
     <context-param>
         <param-name>dbPassword</param-name>
-        <param-value>Giuseppe</param-value>
+        <param-value>ciao333</param-value>
     </context-param>
     <context-param>
         <param-name>dbDriver</param-name>
@@ -23,7 +23,7 @@
     </context-param>
     <context-param>
         <param-name>UPLOAD_BASE</param-name>
-        <param-value>/Users/giuseppedambrosi/uploadsForProject</param-value>
+        <param-value>/home/mishow/UploadsTIW</param-value>
     </context-param>
 
     <!-- Error‐page per IllegalStateException (oversize multipart) -->

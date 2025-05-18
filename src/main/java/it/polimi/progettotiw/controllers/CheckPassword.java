@@ -6,6 +6,7 @@ import java.sql.SQLException;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,19 +24,12 @@ import it.polimi.progettotiw.dao.UserDAO;
 import it.polimi.progettotiw.ConnectionHandler;
 
 @WebServlet("/CheckPassword")
+@MultipartConfig
 public class CheckPassword extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private Connection connection = null;
-	private TemplateEngine templateEngine;
-	private JakartaServletWebApplication application;
 	public void init() throws ServletException {
 		ServletContext servletContext = getServletContext();
-		application = JakartaServletWebApplication.buildApplication(servletContext);
-		WebApplicationTemplateResolver templateResolver = new WebApplicationTemplateResolver(application);
-		templateResolver.setTemplateMode(TemplateMode.HTML);
-		templateResolver.setSuffix(".html");
-		this.templateEngine = new TemplateEngine();
-		this.templateEngine.setTemplateResolver(templateResolver);
 		connection = ConnectionHandler.getConnection(servletContext);
 	}
 
@@ -47,8 +41,10 @@ public class CheckPassword extends HttpServlet {
 		if (session != null) {
 			session.invalidate();
 		}
+		System.out.printf("DEBUG login: usr=[%s] pwd=[%s]%n", usr, pwd);
 		if (usr == null || usr.isEmpty() || pwd == null || pwd.isEmpty()) {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameters");
+			response.getWriter().println("Invalid username or password");
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 
@@ -58,22 +54,20 @@ public class CheckPassword extends HttpServlet {
 			u = userDAO.checkCredentials(usr, pwd);
 		} catch (SQLException e) {
 			e.printStackTrace();
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Cannot check login");
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			response.getWriter().println("Cannot check login");
 			return;
 		}
 
-		String path;
 		if (u == null) {// user not logged
-			path = "/loginPage.html"; // path of loginPage page
-
-			// Crea un nuovo contesto web con il nuovo API di Thymeleaf 3.1.x
-			WebContext ctx = new WebContext(application.buildExchange(request, response));
-			ctx.setVariable("errorMessage", "Incorrect user or password!");
-			templateEngine.process(path, ctx, response.getWriter());
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.getWriter().println("Incorrect credentials");
 		} else {
 			request.getSession().setAttribute("user", u);// save user in session
-			path = getServletContext().getContextPath() + "/GoToHome";
-			response.sendRedirect(path);
+			response.setStatus(HttpServletResponse.SC_OK);
+			response.setContentType("application/json");
+			response.setCharacterEncoding("UTF-8");
+			response.getWriter().println(usr);
 		}
 	}
 

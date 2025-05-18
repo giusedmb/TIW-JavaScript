@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +27,7 @@ import it.polimi.progettotiw.dao.UserDAO;
 import it.polimi.progettotiw.ConnectionHandler;
 
 @WebServlet("/CheckRegistration")
+@MultipartConfig
 public class CheckRegistration extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9_]{3,20}$");
@@ -33,20 +35,10 @@ public class CheckRegistration extends HttpServlet {
 	private static final int MAX_PASSWORD_LENGTH = 60;
 
 	private Connection connection;
-	private TemplateEngine templateEngine;
-	private JakartaServletWebApplication application;
 
 	@Override
 	public void init() throws ServletException {
 		ServletContext servletContext = getServletContext();
-		application = JakartaServletWebApplication.buildApplication(servletContext);
-
-		WebApplicationTemplateResolver templateResolver = new WebApplicationTemplateResolver(application);
-		templateResolver.setTemplateMode(TemplateMode.HTML);
-		templateResolver.setSuffix(".html");
-
-		templateEngine = new TemplateEngine();
-		templateEngine.setTemplateResolver(templateResolver);
 
 		connection = ConnectionHandler.getConnection(servletContext);
 	}
@@ -64,27 +56,30 @@ public class CheckRegistration extends HttpServlet {
 				password == null || repeated == null ||
 				username.isBlank() || name.isBlank() || surname.isBlank() ||
 				password.isBlank() || repeated.isBlank()) {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parametri mancanti o non validi");
+			response.getWriter().println("Invalid username or password");
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 
 		// Validazioni formali
 		if (!USERNAME_PATTERN.matcher(username).matches()) {
-			sendErrorPage(request, response, "usernameInvalid",
-					"Username non valido: usa 3–20 caratteri alfanumerici o underscore.");
+			response.getWriter().println("Invalid username");
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 		if (name.length() > MAX_NAME_LENGTH || surname.length() > MAX_NAME_LENGTH) {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Nome o cognome troppo lunghi");
+			response.getWriter().println("Username is too long");
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 		if (password.length() < 8 || password.length() > MAX_PASSWORD_LENGTH) {
-			sendErrorPage(request, response, "passwordInvalid",
-					"Password deve essere tra 8 e 60 caratteri.");
+			response.getWriter().println("Password is too short or too long");
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 		if (!password.equals(repeated)) {
-			sendErrorPage(request, response, "passwordMismatch", "Le password non coincidono.");
+			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			response.getWriter().println("Passwords do not match");
 			return;
 		}
 
@@ -95,8 +90,8 @@ public class CheckRegistration extends HttpServlet {
 			ArrayList<User> registeredUsers = userDAO.findAllUsers();
 			for (User regUser : registeredUsers) {
 				if (regUser.getUsername().equals(username)) {
-					sendErrorPage(request, response, "nicknameTaken",
-							"Questo username è già in uso, scegline un altro.");
+					response.getWriter().println("Username Already Taken");
+					response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 					return;
 				}
 			}
@@ -120,17 +115,19 @@ public class CheckRegistration extends HttpServlet {
 
 		} catch (SQLException e) {
 			log("ERRORE SQL in registrazione utente", e);
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Errore interno");
+			response.getWriter().println("Cannot check registration");
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		} catch (IOException e) {
 			log("ERRORE filesystem in registrazione utente", e);
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Errore interno");
+			response.getWriter().println("Error filesystem");
+			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			return;
 		}
 
-		// Redirect al login
-		String loginPath = getServletContext().getContextPath() + "/loginPage.html";
-		response.sendRedirect(loginPath);
+		response.setStatus(HttpServletResponse.SC_OK);
+		response.setContentType("application/json");
+		response.setCharacterEncoding("UTF-8");
 	}
 
 	@Override
@@ -142,11 +139,4 @@ public class CheckRegistration extends HttpServlet {
 		}
 	}
 
-	/** Utility per mostrare errori utente via Thymeleaf */
-	private void sendErrorPage(HttpServletRequest req, HttpServletResponse resp,
-							   String varName, String message) throws IOException {
-		WebContext ctx = new WebContext(application.buildExchange(req, resp));
-		ctx.setVariable(varName, message);
-		templateEngine.process("/loginPage.html", ctx, resp.getWriter());
-	}
 }
