@@ -63,12 +63,13 @@ public class SaveAlbum extends HttpServlet {
         String performer  = request.getParameter("performer");
         String yearStr    = request.getParameter("publicationYear");
         Part imagePart    = request.getPart("image");
-
+        System.out.printf("ciao");
         if (title == null || title.isEmpty()
                 || performer == null || performer.isEmpty()
                 || yearStr == null || yearStr.isEmpty()
                 || imagePart == null || imagePart.getSize() == 0) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parametri mancanti");
+            response.getWriter().println("Missing parameters");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
@@ -76,7 +77,8 @@ public class SaveAlbum extends HttpServlet {
         try {
             publicationYear = Integer.parseInt(yearStr);
         } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Anno non valido");
+            response.getWriter().println("Year is not a number");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
@@ -102,7 +104,8 @@ public class SaveAlbum extends HttpServlet {
             Files.copy(imagePart.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             log("Errore salvataggio immagine", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Errore salvataggio immagine");
+            response.getWriter().println("Error uploading image");
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
         }
 
@@ -118,12 +121,15 @@ public class SaveAlbum extends HttpServlet {
             );
         } catch (SQLException e) {
             log("Errore DB salvataggio album", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Errore salvataggio album");
+            response.getWriter().println("Error uploading album");
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
         }
 
         // 6) redirect a GoToHome
-        response.sendRedirect(request.getContextPath() + "/GoToHome");
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
     }catch (IllegalStateException e) {
             // file troppo grande da Servlet container
             request.setAttribute("jakarta.servlet.error.exception", e);
@@ -131,8 +137,8 @@ public class SaveAlbum extends HttpServlet {
         } catch (Exception e) {
             // altri errori generici
             e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Error in file upload");
+            response.getWriter().println("Too big to upload");
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
