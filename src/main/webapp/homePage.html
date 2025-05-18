@@ -1,146 +1,101 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="">
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Home page</title>
-    <link rel="stylesheet" th:href="@{/style.css}" />
+    <link rel="stylesheet" href="style.css">
+
+    <!-- include il tuo Utils e il HomePageManager -->
+    <script src="./resources/Utils.js" defer></script>
+    <script src="./resources/HomePageManager.js" defer></script>
 </head>
 <body>
 <div class="container">
     <h1>Home page</h1>
+    <!-- contenitore per messaggi di errore/info -->
+    <p id="messageContainer"></p>
 
     <h2>Your playlists are here!</h2>
-    <table>
+    <table id="playlistTable">
         <thead>
         <tr>
             <th>Title</th>
             <th>Creation date</th>
         </tr>
         </thead>
-        <tbody>
-        <tr th:if="${#lists.isEmpty(userPlaylists)}">
-            <td colspan="2">No playlists available</td>
-        </tr>
-        <tr th:each="playlist : ${userPlaylists}">
-            <td>
-                <a th:href="@{/GoToPlaylist(playlist_id=${playlist.playlist_id})}"
-                   th:text="${playlist.title}">Playlist Title</a>
-            </td>
-            <td th:text="${#temporals.format(playlist.localDateTime, 'dd/MM/yyyy HH:mm')}">
-                Playlist Creation Date
-            </td>
-        </tr>
+        <tbody id="playlistTableBody">
+        <!-- verrà popolato via JS -->
         </tbody>
     </table>
 
     <h2>Create a New Album</h2>
-    <form th:action="@{/SaveAlbum}" method="post" enctype="multipart/form-data">
+    <form id="albumForm" action="#" method="post" enctype="multipart/form-data">
         <div>
-            <label>
-                <input name="title" type="text" required placeholder="Album Title" />
-            </label>
+            <input name="title" type="text" required placeholder="Album Title">
         </div>
         <div>
-            <label>
-                <input name="performer" type="text" required placeholder="Performer" />
-            </label>
+            <input name="performer" type="text" required placeholder="Performer">
         </div>
         <div>
-            <label>
-                <input name="publicationYear"
-                       type="number"
-                       required
-                       placeholder="Publication Year"
-                       min="1000"
-                       max="2025" />
-            </label>
+            <input name="publicationYear"
+                   type="number"
+                   required
+                   placeholder="Publication Year"
+                   min="1000"
+                   max="2025">
         </div>
         <div>
             <label>Upload Image here:</label>
-
-
-            <input name="image" type="file" required accept="image/*" />
-            <small>Maximum image size is  5MB. Upload images here</small>
+            <input name="image" type="file" required accept="image/*">
+            <small>Maximum image size is 5MB.</small>
         </div>
         <button type="submit">Create Album</button>
     </form>
 
     <h2>Upload a Track</h2>
-    <form th:action="@{/UploadTrack}" method="post" enctype="multipart/form-data">
+    <form id="trackForm" action="#" method="post" enctype="multipart/form-data">
         <div>
             <label for="albumSelect">Album:</label>
             <select id="albumSelect" name="albumId" required>
-                <option th:if="${#lists.isEmpty(albums)}" disabled selected>
-                    Nessun album disponibile
-                </option>
-                <option th:unless="${#lists.isEmpty(albums)}" value="" disabled selected>
-                    -- Select album --
-                </option>
-                <option th:each="alb : ${albums}"
-                        th:value="${alb.albumId}"
-                        th:text="${alb.title} + ' (' + ${alb.publicationYear} + ')'">
-                    Titolo Album (Anno)
-                </option>
+                <!-- verrà popolato via JS -->
             </select>
         </div>
         <div>
-            <label>
-                <input name="title" type="text" required placeholder="Track Title" />
-            </label>
+            <input name="title" type="text" required placeholder="Track Title">
         </div>
         <div>
-            <label>
-                <select name="genreName" required>
-                    <option value="" disabled selected>-- Choose Genre --</option>
-                    <option th:each="g : ${genres}"
-                            th:value="${g}"
-                            th:text="${g}">
-                        Genre
-                    </option>
-                </select>
-            </label>
+            <label for="genreSelect">Genre:</label>
+            <select id="genreSelect" name="genreName" required>
+                <!-- verrà popolato via JS -->
+            </select>
         </div>
         <div>
-            <input name="audioFile" type="file" accept="audio/*" required />
-            <small>Maximum upload size 10MB. Upload your audio here.</small>
+            <label>Upload Audio here:</label>
+            <input name="audioFile" type="file" accept="audio/*" required>
+            <small>Maximum upload size 10MB.</small>
         </div>
         <button type="submit">Upload Track</button>
     </form>
 
     <h2>Create a New Playlist</h2>
-    <form th:action="@{/SavePlaylist}" method="post">
+    <form id="playlistForm" action="#" method="post">
         <div>
-            <label>
-                <input name="title"
-                       type="text"
-                       required
-                       placeholder="Playlist Title" />
-            </label>
+            <input name="title"
+                   type="text"
+                   required
+                   placeholder="Playlist Title">
         </div>
         <div>
             <label>Select Tracks:</label>
-            <div class="checkbox-group">
-                <div class="checkbox-item" th:each="track : ${userTracks}">
-                    <label>
-                        <input type="checkbox"
-                               th:id="${'track_' + track.trackId}"
-                               th:name="trackIds"
-                               th:value="${track.trackId}" />
-                    </label>
-                    <label
-                            th:for="${'track_' + track.trackId}">
-                        <span th:text="${track.title}">Title</span>
-                    </label>
-                </div>
-                <div th:if="${#lists.isEmpty(userTracks)}">
-                    No tracks available
-                </div>
+            <div class="checkbox-group" id="trackCheckboxGroup">
+                <!-- verrà popolato via JS -->
             </div>
         </div>
         <button type="submit">Create Playlist</button>
     </form>
 
     <p>
-        <a class="logout" th:href="@{/Logout}">Logout</a>
+        <a class="logout" href="Logout">Logout</a>
     </p>
 </div>
 </body>
