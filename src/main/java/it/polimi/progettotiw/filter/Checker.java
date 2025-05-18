@@ -16,7 +16,7 @@ public class Checker implements Filter {
 	private ServletContext ctx;
 
 	@Override
-	public void init(FilterConfig filterConfig) throws ServletException {
+	public void init(FilterConfig filterConfig) {
 		this.ctx = filterConfig.getServletContext();
 	}
 

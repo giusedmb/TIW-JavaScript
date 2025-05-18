@@ -1,6 +1,3 @@
-// HomePageManager.js
-// dipende da Utils.js che definisce makeCall(method, url, data, callback)
-
 (function(){
 
     // endpoint REST
@@ -14,6 +11,7 @@
     let playlistTable, albumCreator, trackUploader, playlistCreator;
 
     window.addEventListener("load", () => {
+        // Verifica login
         if (!sessionStorage.getItem("username")) {
             window.location.href = "loginPage.html";
             return;
@@ -37,16 +35,16 @@
 
         this.show = () => {
             makeCall("GET", URL_PLAYLIST_LIST, null, req => {
-                if (req.readyState!==XMLHttpRequest.DONE) return;
-                if (req.status===200) {
+                if (req.readyState !== XMLHttpRequest.DONE) return;
+                if (req.status === 200) {
                     const data = JSON.parse(req.responseText);
-                    if (data.length===0) {
+                    if (data.length === 0) {
                         this.msg.textContent = "No playlists available";
                         return;
                     }
                     this.update(data);
                 }
-                else if (req.status===403) {
+                else if (req.status === 403) {
                     window.location.href = req.getResponseHeader("Location");
                     sessionStorage.removeItem("username");
                 }
@@ -99,12 +97,12 @@
         this.show = () => {
             // aggiorna la select degli album
             makeCall("GET", URL_ALBUM_LIST, null, req => {
-                if (req.readyState!==XMLHttpRequest.DONE) return;
-                if (req.status===200) {
+                if (req.readyState !== XMLHttpRequest.DONE) return;
+                if (req.status === 200) {
                     const opts = JSON.parse(req.responseText);
                     const sel  = document.getElementById("albumSelect");
                     sel.innerHTML = "";
-                    if (opts.length===0) {
+                    if (opts.length === 0) {
                         const o = document.createElement("option");
                         o.disabled = true; o.selected = true;
                         o.textContent = "Nessun album disponibile";
@@ -130,9 +128,9 @@
                 e.preventDefault();
                 const fd = new FormData(this.form);
                 makeCall("POST", URL_CREATE_ALBUM, fd, req => {
-                    if (req.readyState!==XMLHttpRequest.DONE) return;
-                    if (req.status===200)      orchestrator.refresh();
-                    else if (req.status===403) {
+                    if (req.readyState !== XMLHttpRequest.DONE) return;
+                    if (req.status === 200)      orchestrator.refresh();
+                    else if (req.status === 403) {
                         window.location.href = req.getResponseHeader("Location");
                         sessionStorage.removeItem("username");
                     }
@@ -163,9 +161,9 @@
                 e.preventDefault();
                 const fd = new FormData(this.form);
                 makeCall("POST", URL_UPLOAD_TRACK, fd, req => {
-                    if (req.readyState!==XMLHttpRequest.DONE) return;
-                    if (req.status===200)      orchestrator.refresh();
-                    else if (req.status===403) {
+                    if (req.readyState !== XMLHttpRequest.DONE) return;
+                    if (req.status === 200)      orchestrator.refresh();
+                    else if (req.status === 403) {
                         window.location.href = req.getResponseHeader("Location");
                         sessionStorage.removeItem("username");
                     }
@@ -189,11 +187,11 @@
 
         this.show = () => {
             makeCall("GET", URL_TRACK_LIST, null, req => {
-                if (req.readyState!==XMLHttpRequest.DONE) return;
-                if (req.status===200) {
+                if (req.readyState !== XMLHttpRequest.DONE) return;
+                if (req.status === 200) {
                     const tracks = JSON.parse(req.responseText);
                     this.group.innerHTML = "";
-                    if (tracks.length===0) {
+                    if (tracks.length === 0) {
                         this.group.textContent = "No tracks available";
                     } else {
                         tracks.forEach(t => {
@@ -219,15 +217,15 @@
         this.registerEvents = orchestrator => {
             this.form.addEventListener("submit", e => {
                 e.preventDefault();
-                if (this.form.querySelectorAll('input[name="trackIds"]:checked').length===0) {
+                if (this.form.querySelectorAll('input[name="trackIds"]:checked').length === 0) {
                     alert("Seleziona almeno un brano");
                     return;
                 }
                 const fd = new FormData(this.form);
                 makeCall("POST", URL_SAVE_PLAYLIST, fd, req => {
-                    if (req.readyState!==XMLHttpRequest.DONE) return;
-                    if (req.status===200)      orchestrator.refresh();
-                    else if (req.status===403) {
+                    if (req.readyState !== XMLHttpRequest.DONE) return;
+                    if (req.status === 200)      orchestrator.refresh();
+                    else if (req.status === 403) {
                         window.location.href = req.getResponseHeader("Location");
                         sessionStorage.removeItem("username");
                     }
@@ -240,8 +238,6 @@
 
     // --- PageOrchestrator ---
     function HomePageManager() {
-        // è necessario aggiungere in HTML:
-        // <p id="messageContainer"></p> subito dopo <h1>
         const msg = document.getElementById("messageContainer");
 
         playlistTable   = new PlaylistTable(
@@ -250,15 +246,15 @@
             msg
         );
         albumCreator    = new AlbumCreator(
-            document.querySelector("form[th\\:action='@{/SaveAlbum}']"),
+            document.getElementById("albumForm"),
             msg
         );
         trackUploader   = new TrackUploader(
-            document.querySelector("form[th\\:action='@{/UploadTrack}']"),
+            document.getElementById("trackForm"),
             msg
         );
         playlistCreator = new PlaylistCreator(
-            document.querySelector("form[th\\:action='@{/SavePlaylist}']"),
+            document.getElementById("playlistForm"),
             msg
         );
 

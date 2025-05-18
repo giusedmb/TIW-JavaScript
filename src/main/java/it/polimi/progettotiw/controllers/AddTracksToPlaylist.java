@@ -8,6 +8,7 @@ import it.polimi.progettotiw.ConnectionHandler;
 import it.polimi.progettotiw.dao.PlaylistDAO;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import org.thymeleaf.TemplateEngine;
@@ -16,6 +17,7 @@ import org.thymeleaf.templateresolver.WebApplicationTemplateResolver;
 import org.thymeleaf.web.servlet.JakartaServletWebApplication;
 
 @WebServlet("/AddTracksToPlaylist")
+@MultipartConfig
 public class AddTracksToPlaylist extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private Connection connection = null;
@@ -23,12 +25,6 @@ public class AddTracksToPlaylist extends HttpServlet {
     @Override
     public void init() throws ServletException {
         ServletContext servletContext = getServletContext();
-        JakartaServletWebApplication application = JakartaServletWebApplication.buildApplication(servletContext);
-        WebApplicationTemplateResolver templateResolver = new WebApplicationTemplateResolver(application);
-        templateResolver.setTemplateMode(TemplateMode.HTML);
-        templateResolver.setSuffix(".html");
-        TemplateEngine templateEngine = new TemplateEngine();
-        templateEngine.setTemplateResolver(templateResolver);
         connection = ConnectionHandler.getConnection(servletContext);
     }
 
@@ -40,7 +36,8 @@ public class AddTracksToPlaylist extends HttpServlet {
 
         // Gestione del caso in cui nessuna traccia è selezionata
         if (trackIdsArray == null || trackIdsArray.length == 0) {
-            response.sendRedirect("GoToPlaylist?playlist_id=" + playlistId + "&page=0");
+            response.getWriter().println("Track IDs cannot be empty");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
