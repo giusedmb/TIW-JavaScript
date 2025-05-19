@@ -241,8 +241,8 @@
                             const cb = document.createElement("input");
                             cb.type = "checkbox";
                             cb.name = "trackIds";
-                            cb.value = t.trackId;
-                            cb.id = "track_" + t.trackId;
+                            cb.value = t.track_id;
+                            cb.id = "track_" + t.track_id;
                             div.appendChild(cb);
                             const lbl = document.createElement("label");
                             lbl.htmlFor = cb.id;
