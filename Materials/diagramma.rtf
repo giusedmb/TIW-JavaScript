@@ -103,3 +103,5 @@ INSERT INTO ciao.Genres (name) VALUES ('Jazz');
 INSERT INTO ciao.Genres (name) VALUES ('R&B');
 INSERT INTO ciao.Genres (name) VALUES ('Soul');
 INSERT INTO ciao.Genres (name) VALUES ('Other');
+ALTER TABLE Playlist_Tracks
+  ADD COLUMN position INT NOT NULL DEFAULT 0;
