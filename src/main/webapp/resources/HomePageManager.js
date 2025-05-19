@@ -7,6 +7,7 @@
     const URL_CREATE_ALBUM    = "SaveAlbum";
     const URL_UPLOAD_TRACK    = "UploadTrack";
     const URL_SAVE_PLAYLIST   = "SavePlaylist";
+    const URL_GENRE_LIST      = "GetGenresData";
 
     let playlistTable, albumCreator, trackUploader, playlistCreator;
 
@@ -81,11 +82,9 @@
 
 
     // --- AlbumCreator: intercetta il form /SaveAlbum ---
-    function AlbumCreator(formElem, msgElem) {
+    function AlbumCreator(formElem) {
         this.form = formElem;
-        this.msg = msgElem;
-
-        // Controllo dimensione immagine
+// Controllo dimensione immagine
         this.form.querySelector('input[name="image"]').addEventListener("change", e => {
             if (e.target.files[0]?.size > 5 * 1024 * 1024) {
                 alert("La dimensione massima è 5MB");
@@ -126,14 +125,80 @@
 
         // client‐side: max 10MB
         this.form.querySelector('input[name="audioFile"]').addEventListener("change", e => {
-            if (e.target.files[0].size > 10*1024*1024) {
+            if (e.target.files[0]?.size > 10 * 1024 * 1024) {
                 alert("La dimensione massima è 10MB");
                 e.target.value = "";
             }
         });
 
         this.reset = () => this.form.reset();
-        this.show =() => {};
+
+        this.show = () => {
+            // 1) Popola gli album
+            makeCall("GET", URL_ALBUM_LIST, null, req => {
+                if (req.readyState !== XMLHttpRequest.DONE) return;
+                const selAlbum = document.getElementById("albumSelect");
+                selAlbum.innerHTML = "";
+                if (req.status === 200) {
+                    const albums = JSON.parse(req.responseText);
+                    if (albums.length === 0) {
+                        const o = document.createElement("option");
+                        o.disabled = true; o.selected = true;
+                        o.textContent = "Nessun album disponibile";
+                        selAlbum.appendChild(o);
+                    } else {
+                        const placeholder = document.createElement("option");
+                        placeholder.disabled = true; placeholder.selected = true;
+                        placeholder.textContent = "-- Select album --";
+                        selAlbum.appendChild(placeholder);
+                        albums.forEach(a => {
+                            const o = document.createElement("option");
+                            o.value = a.albumId;
+                            o.textContent = `${a.title} (${a.publicationYear})`;
+                            selAlbum.appendChild(o);
+                        });
+                    }
+                } else if (req.status === 403) {
+                    window.location.href = req.getResponseHeader("Location");
+                    sessionStorage.removeItem("username");
+                } else {
+                    this.msg.textContent = req.responseText;
+                }
+            });
+
+            // 2) Popola i generi
+            makeCall("GET", URL_GENRE_LIST, null, req => {
+                if (req.readyState !== XMLHttpRequest.DONE) return;
+                const selGenre = document.getElementById("genreSelect");
+                selGenre.innerHTML = "";
+                if (req.status === 200) {
+                    const genres = JSON.parse(req.responseText);
+                    if (genres.length === 0) {
+                        const o = document.createElement("option");
+                        o.disabled = true; o.selected = true;
+                        o.textContent = "Nessun genere disponibile";
+                        selGenre.appendChild(o);
+                    } else {
+                        const placeholder = document.createElement("option");
+                        placeholder.disabled = true; placeholder.selected = true;
+                        placeholder.textContent = "-- Select genre --";
+                        selGenre.appendChild(placeholder);
+                        genres.forEach(g => {
+                            const o = document.createElement("option");
+                            o.value = g;
+                            o.textContent = g;
+                            selGenre.appendChild(o);
+                        });
+                    }
+                } else if (req.status === 403) {
+                    window.location.href = req.getResponseHeader("Location");
+                    sessionStorage.removeItem("username");
+                } else {
+                    this.msg.textContent = req.responseText;
+                }
+            });
+        };
+
         this.registerEvents = orchestrator => {
             this.form.addEventListener("submit", e => {
                 e.preventDefault();
@@ -147,15 +212,13 @@
                     else alert(req.responseText);
                 });
             }, false);
-
         };
     }
 
 
     // --- PlaylistCreator: intercetta il form /SavePlaylist con i checkbox ---
-    function PlaylistCreator(formElem, msgElem) {
+    function PlaylistCreator(formElem) {
         this.form = formElem;
-        this.msg  = msgElem;
         this.group = formElem.querySelector(".checkbox-group");
 
         this.reset = () => {
@@ -224,16 +287,14 @@
             msg
         );
         albumCreator    = new AlbumCreator(
-            document.getElementById("albumForm"),
-            msg
+            document.getElementById("albumForm")
         );
         trackUploader   = new TrackUploader(
             document.getElementById("trackForm"),
             msg
         );
         playlistCreator = new PlaylistCreator(
-            document.getElementById("playlistForm"),
-            msg
+            document.getElementById("playlistForm")
         );
 
         this.start = () => {
