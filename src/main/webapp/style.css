@@ -222,15 +222,18 @@ input[type="checkbox"] {
 
 .album-cover {
     flex: 0 0 300px;
-    max-height: 300px;
 }
 
 .album-cover img {
     width: 100%;
+    max-width: 200px;
     height: auto;
     border-radius: 5px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: block;
+    margin: 0 auto;
 }
+
 
 .track-info {
     flex: 1 1 300px;
