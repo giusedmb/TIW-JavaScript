@@ -102,6 +102,7 @@ public class TrackDAO {
         album.setPerformer(rs.getString("performer"));
         album.setPublicationYear(rs.getInt("publication_year"));
         album.setImage(rs.getString("image")); // Campo "image" dal database
+        album.setTitle(rs.getString("title"));
         track.setAlbum(album);
 
         return track;
