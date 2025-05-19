@@ -40,7 +40,7 @@
                     const resp = JSON.parse(req.responseText);
                     this.tracks       = resp.tracks;
                     this.currentBlock = 0;
-                    this.container.querySelector("#detailTitle").textContent = resp.playlist_id.title;
+                    this.container.querySelector("#detailTitle").textContent = resp.playlist.title;
                     this.renderBlock(0);
                 }
                 else if (req.status === 403) {
