@@ -1,7 +1,6 @@
 (function(){
-
-    // endpoint REST
     const URL_PLAYLIST_LIST   = "GetUserPlaylistsData";
+    const URL_PLAYLIST_DATA   = "GetPlaylistData";
     const URL_ALBUM_LIST      = "GetAlbumData";
     const URL_TRACK_LIST      = "GetUserTracksData";
     const URL_CREATE_ALBUM    = "SaveAlbum";
@@ -9,25 +8,85 @@
     const URL_SAVE_PLAYLIST   = "SavePlaylist";
     const URL_GENRE_LIST      = "GetGenresData";
 
-    let playlistTable, albumCreator, trackUploader, playlistCreator;
+    function PlaylistDetailView(containerElem, msgElem) {
+        this.container     = containerElem;
+        this.msg           = msgElem;
+        this.tracks        = [];
+        this.currentBlock  = 0;
+        this.blockSize     = 5;
 
-    window.addEventListener("load", () => {
-        // Verifica login
-        if (!sessionStorage.getItem("username")) {
-            window.location.href = "loginPage.html";
-            return;
-        }
-        const manager = new HomePageManager();
-        manager.start();
-        manager.refresh();
-    }, false);
+        // Inizializza il DOM base
+        this.init = () => {
+            this.container.innerHTML = `
+                <h2 id="detailTitle"></h2>
+                <div class="playlist-nav">
+                  <button id="prevBtn">PRECEDENTI</button>
+                  <button id="nextBtn">SUCCESSIVI</button>
+                </div>
+                <table id="detailTable"><tr id="detailRow"></tr></table>
+            `;
+            this.container.querySelector("#prevBtn")
+                .addEventListener("click", () => this.renderBlock(this.currentBlock - 1));
+            this.container.querySelector("#nextBtn")
+                .addEventListener("click", () => this.renderBlock(this.currentBlock + 1));
+        };
 
+        // Carica dal server tutte le tracce della playlist
+        this.load = (playlist_id) => {
+            this.msg.textContent = "";
+            makeCall("GET", `${URL_PLAYLIST_DATA}?playlist_id=${playlist_id}`, null, req => {
+                if (req.readyState !== XMLHttpRequest.DONE) return;
+                if (req.status === 200) {
+                    const resp = JSON.parse(req.responseText);
+                    this.tracks       = resp.tracks;
+                    this.currentBlock = 0;
+                    this.container.querySelector("#detailTitle").textContent = resp.playlist_id.title;
+                    this.renderBlock(0);
+                }
+                else if (req.status === 403) {
+                    window.location.href = req.getResponseHeader("Location");
+                    sessionStorage.removeItem("username");
+                }
+                else {
+                    this.msg.textContent = req.responseText;
+                }
+            });
+        };
 
-    // --- PlaylistTable: mostra la tabella delle playlist ---
-    function PlaylistTable(tableElem, tbodyElem, msgElem) {
-        this.table = tableElem;
-        this.tbody = tbodyElem;
-        this.msg   = msgElem;
+        // Renderizza il blocco specificato
+        this.renderBlock = (blockIndex) => {
+            const totalBlocks = Math.ceil(this.tracks.length / this.blockSize);
+            if (blockIndex < 0 || blockIndex >= totalBlocks) return;
+            this.currentBlock = blockIndex;
+            const start = blockIndex * this.blockSize;
+            const slice = this.tracks.slice(start, start + this.blockSize);
+
+            const row = this.container.querySelector("#detailRow");
+            row.innerHTML = "";
+            slice.forEach(t => {
+                const td = document.createElement("td");
+                td.innerHTML = `
+                    <a href="GoToPlayer?track_id=${t.track_id}" class="track-link">
+                      <div class="track-title">${t.title}</div>
+                      ${ t.album.image
+                    ? `<img src="uploads/${t.album.image}" alt="cover" class="track-image">`
+                    : '' }
+                    </a>`;
+                row.appendChild(td);
+            });
+
+            // Abilita/disabilita i bottoni
+            this.container.querySelector("#prevBtn").disabled = (blockIndex === 0);
+            this.container.querySelector("#nextBtn").disabled = (blockIndex >= totalBlocks - 1);
+        };
+    }
+
+    // --- PlaylistTable: lista delle playlist, click per dettaglio AJAX ---
+    function PlaylistTable(tableElem, tbodyElem, msgElem, detailView) {
+        this.table      = tableElem;
+        this.tbody      = tbodyElem;
+        this.msg        = msgElem;
+        this.detailView = detailView;
 
         this.reset = () => {
             this.table.style.visibility = "hidden";
@@ -49,23 +108,30 @@
                     window.location.href = req.getResponseHeader("Location");
                     sessionStorage.removeItem("username");
                 }
-                else this.msg.textContent = req.responseText;
+                else {
+                    this.msg.textContent = req.responseText;
+                }
             });
         };
 
         this.update = (playlists) => {
             this.tbody.innerHTML = "";
             playlists.forEach(pl => {
-                console.log("Received playlist time:", pl.time, typeof pl.time);
                 const tr = document.createElement("tr");
 
+                // Titolo come link AJAX
                 const tdTitle = document.createElement("td");
                 const a = document.createElement("a");
-                a.href = `GoToPlaylist?playlist_id=${pl.playlist_id}`;
+                a.href = "#";
                 a.textContent = pl.title;
+                a.addEventListener("click", e => {
+                    e.preventDefault();
+                    this.detailView.load(pl.playlist_id);
+                });
                 tdTitle.appendChild(a);
                 tr.appendChild(tdTitle);
 
+                // Data creazione
                 const tdDate = document.createElement("td");
                 tdDate.textContent = new Date(pl.time)
                     .toLocaleString("it-IT", {
@@ -100,7 +166,6 @@
         this.registerEvents = orchestrator => {
             this.form.addEventListener("submit", e => {
                 e.preventDefault();
-                // Passiamo direttamente il form a makeCall
                 makeCall("POST", URL_CREATE_ALBUM, this.form, req => {
                     if (req.readyState !== XMLHttpRequest.DONE) return;
                     if (req.status === 200) {
@@ -272,51 +337,82 @@
                     else alert(req.responseText);
                 });
             }, false);
-
         };
     }
 
 
-    // --- PageOrchestrator ---
-    function HomePageManager() {
+    // --- PageOrchestrator (HomePageManager) ---
+    function HomePageManager(pt, pd, ac, tu, pc) {
+        this.playlistTable   = pt;
+        this.playlistDetail  = pd;
+        this.albumCreator    = ac;
+        this.trackUploader   = tu;
+        this.playlistCreator = pc;
+    }
+
+    HomePageManager.prototype.start = function() {
+        this.albumCreator.registerEvents(this);
+        this.trackUploader.registerEvents(this);
+        this.playlistCreator.registerEvents(this);
+        this.playlistTable.show();
+        document.querySelector("a.logout")
+            .addEventListener("click", () => sessionStorage.removeItem("username"), false);
+    };
+
+    HomePageManager.prototype.refresh = function() {
+        document.getElementById("messageContainer").textContent = "";
+        this.playlistTable.reset();
+        this.albumCreator.reset();
+        this.trackUploader.reset();
+        this.playlistCreator.reset();
+        this.playlistTable.show();
+        this.albumCreator.show();
+        this.trackUploader.show();
+        this.playlistCreator.show();
+        this.playlistDetail.container.innerHTML = "";  // Pulisce il dettaglio
+    };
+
+    // --- Inizializzazione all’avvio della pagina ---
+    window.addEventListener("load", () => {
+        if (!sessionStorage.getItem("username")) {
+            window.location.href = "loginPage.html";
+            return;
+        }
+
         const msg = document.getElementById("messageContainer");
 
-        playlistTable   = new PlaylistTable(
-            document.getElementById("playlistTable"),
-            document.getElementById("playlistTableBody"),
+        const detailView = new PlaylistDetailView(
+            document.getElementById("playlistDetailContainer"),
             msg
         );
-        albumCreator    = new AlbumCreator(
+        detailView.init();
+
+        const playlistTable = new PlaylistTable(
+            document.getElementById("playlistTable"),
+            document.getElementById("playlistTableBody"),
+            msg,
+            detailView
+        );
+        let albumCreator = new AlbumCreator(
             document.getElementById("albumForm")
         );
-        trackUploader   = new TrackUploader(
+        const trackUploader = new TrackUploader(
             document.getElementById("trackForm"),
             msg
         );
-        playlistCreator = new PlaylistCreator(
+        let playlistCreator = new PlaylistCreator(
             document.getElementById("playlistForm")
         );
 
-        this.start = () => {
-            albumCreator.registerEvents(this);
-            trackUploader.registerEvents(this);
-            playlistCreator.registerEvents(this);
-            document.querySelector("a.logout").addEventListener("click", () => {
-                sessionStorage.removeItem("username");
-            }, false);
-        };
-
-        this.refresh = () => {
-            msg.textContent = "";
-            playlistTable.reset();
-            albumCreator.reset();
-            trackUploader.reset();
-            playlistCreator.reset();
-            playlistTable.show();
-            albumCreator.show();
-            trackUploader.show();
-            playlistCreator.show();
-        };
-    }
+        const manager = new HomePageManager(
+            playlistTable,
+            detailView,
+            albumCreator,
+            trackUploader,
+            playlistCreator
+        );
+        manager.start();
+        manager.refresh();
+    }, false);
 
 })();
