@@ -9,6 +9,146 @@
     const URL_GENRE_LIST = "GetGenresData";
     const URL_TRACK_DATA = "GetTrackData";
     const URL_ADD_TRACKS_TO_PLAYLIST = "AddTracksToPlaylist";
+    const URL_SAVE_ORDER = "SavePlaylistOrder";
+
+    // -------------------
+    // INIEZIONE MODALE RIORDINO
+    // -------------------
+    const modalHTML = `
+      <div id="modalOverlay" style="
+            position:fixed;top:0;left:0;width:100%;height:100%;
+            background:rgba(0,0,0,0.5);display:none;z-index:1000;">
+      </div>
+      <div id="reorderModal" style="
+            position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+            background:#fff;padding:1em;display:none;z-index:1001;
+            max-height:80%;overflow:auto;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.3);">
+        <h2>Riordino Playlist</h2>
+        <ul id="reorderList" style="list-style:none;padding:0;margin:0;"></ul>
+        <div style="margin-top:1em;text-align:right;">
+          <button id="cancelReorderBtn" style="margin-right:0.5em;">Annulla</button>
+          <button id="saveReorderBtn">Salva ordinamento</button>
+        </div>
+      </div>`;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // -------------------
+    // FUNZIONI DRAG & DROP
+    // -------------------
+    let dragSrcEl = null;
+    function handleDragStart(e) {
+        dragSrcEl = e.target;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', null);
+    }
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+    function handleDrop(e) {
+        e.stopPropagation();
+        if (dragSrcEl !== e.target && e.target.tagName === 'LI') {
+            // inserisce il dragged item prima di quello su cui droppa
+            const list = e.target.parentNode;
+            list.insertBefore(dragSrcEl, e.target.nextSibling);
+        }
+        return false;
+    }
+
+    // -------------------
+    // APRI / CHIUDI MODALE
+    // -------------------
+    function openReorderModal(playlistId) {
+        const overlay = document.getElementById("modalOverlay");
+        const modal = document.getElementById("reorderModal");
+        const list = document.getElementById("reorderList");
+        overlay.style.display = 'block';
+        modal.style.display = 'block';
+        list.innerHTML = '';
+
+        // carica tutte le tracce della playlist
+        console.log("openReorderModal:", { URL_PLAYLIST_DATA, playlistId });
+        makeCall("GET", `${URL_PLAYLIST_DATA}?playlist_id=${playlistId}`, null, req => {
+            if (req.readyState !== XMLHttpRequest.DONE) return;
+            if (req.status === 200) {
+                const resp = JSON.parse(req.responseText);
+                resp.tracks.forEach(t => {
+                    const li = document.createElement("li");
+                    li.textContent = t.title;
+                    li.setAttribute("draggable", "true");
+                    li.dataset.trackId = t.track_id;
+                    li.style.padding = '0.5em';
+                    li.style.border = '1px solid #ccc';
+                    li.style.marginBottom = '0.2em';
+                    li.style.cursor = 'move';
+                    li.addEventListener("dragstart", handleDragStart);
+                    li.addEventListener("dragover", handleDragOver);
+                    li.addEventListener("drop", handleDrop);
+                    list.appendChild(li);
+                });
+                modal.dataset.playlistId = playlistId;
+            } else if (req.status === 403) {
+                window.location.href = req.getResponseHeader("Location");
+                sessionStorage.removeItem("username");
+            } else {
+                alert(req.responseText || "Errore nel caricamento delle tracce");
+                closeReorderModal();
+            }
+        });
+    }
+    function closeReorderModal() {
+        document.getElementById("modalOverlay").style.display = 'none';
+        document.getElementById("reorderModal").style.display = 'none';
+    }
+
+    // salva l’ordinamento PERSONALIZZATO sul server
+    // Salva l’ordinamento PERSONALIZZATO
+    document.getElementById("saveReorderBtn").addEventListener("click", function () {
+        const modal = document.getElementById("reorderModal");
+        const playlistId = modal.dataset.playlistId;
+        const items = Array.from(document.querySelectorAll("#reorderList li"));
+        if (items.length === 0) {
+            alert("Nessuna traccia da salvare");
+            return;
+        }
+
+        // Creo un form HTML "fittizio" con gli input nascosti
+        const tempForm = document.createElement("form");
+
+        // input per playlist_id
+        const inputPlaylist = document.createElement("input");
+        inputPlaylist.type = "hidden";
+        inputPlaylist.name = "playlist_id";
+        inputPlaylist.value = playlistId;
+        tempForm.appendChild(inputPlaylist);
+
+        // input per ogni trackIds[]
+        items.forEach(li => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "trackIds[]";
+            input.value = li.dataset.trackId;
+            tempForm.appendChild(input);
+        });
+
+        // Chiamo makeCall passandogli il form vero
+        makeCall("POST", URL_SAVE_ORDER, tempForm, function (req) {
+            if (req.readyState !== XMLHttpRequest.DONE) return;
+            if (req.status === 200) {
+                closeReorderModal();
+                alert("Ordinamento salvato con successo!");
+            } else if (req.status === 403) {
+                window.location.href = req.getResponseHeader("Location");
+                sessionStorage.removeItem("username");
+            } else {
+                alert(req.responseText || "Errore durante il salvataggio");
+            }
+        });
+    });
+
+    document.getElementById("cancelReorderBtn").addEventListener("click", closeReorderModal);
+    document.getElementById("modalOverlay").addEventListener("click", closeReorderModal);
 
     function PlaylistDetailView(containerElem, msgElem, playerView) {
         this.container = containerElem;
@@ -292,6 +432,8 @@
             this.tbody.innerHTML = "";
             playlists.forEach(pl => {
                 const tr = document.createElement("tr");
+
+                // Titolo (click apre detailView)
                 const tdTitle = document.createElement("td");
                 const a = document.createElement("a");
                 a.href = "#";
@@ -303,6 +445,7 @@
                 tdTitle.appendChild(a);
                 tr.appendChild(tdTitle);
 
+                // Data creazione
                 const tdDate = document.createElement("td");
                 tdDate.textContent = new Date(pl.time)
                     .toLocaleString("it-IT", {
@@ -310,6 +453,14 @@
                         hour: "2-digit", minute: "2-digit"
                     });
                 tr.appendChild(tdDate);
+
+                // Pulsante RIORDINO
+                const tdReorder = document.createElement("td");
+                const reorderBtn = document.createElement("button");
+                reorderBtn.textContent = "Riordino";
+                reorderBtn.addEventListener("click", () => openReorderModal(pl.playlist_id));
+                tdReorder.appendChild(reorderBtn);
+                tr.appendChild(tdReorder);
 
                 this.tbody.appendChild(tr);
             });

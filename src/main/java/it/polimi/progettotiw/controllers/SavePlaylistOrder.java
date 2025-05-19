@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @WebServlet("/SavePlaylistOrder")
-public class SavePlaylistOrderServlet extends HttpServlet {
+public class SavePlaylistOrder extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private Connection connection;
 
