@@ -18,18 +18,27 @@
         // Inizializza il DOM base
         this.init = () => {
             this.container.innerHTML = `
-                <h2 id="detailTitle"></h2>
-                <div class="playlist-nav">
-                  <button id="prevBtn">PRECEDENTI</button>
-                  <button id="nextBtn">SUCCESSIVI</button>
-                </div>
-                <table id="detailTable"><tr id="detailRow"></tr></table>
-            `;
+        <h2 id="detailTitle"></h2>
+        <div class="playlist-navigation">
+          <div class="nav-button prev-button">
+            <button id="prevBtn">PRECEDENTI</button>
+          </div>
+          <div class="tracks-container">
+            <table id="detailTable">
+              <tr id="detailRow"></tr>
+            </table>
+          </div>
+          <div class="nav-button next-button">
+            <button id="nextBtn">SUCCESSIVI</button>
+          </div>
+        </div>
+    `;
             this.container.querySelector("#prevBtn")
                 .addEventListener("click", () => this.renderBlock(this.currentBlock - 1));
             this.container.querySelector("#nextBtn")
                 .addEventListener("click", () => this.renderBlock(this.currentBlock + 1));
         };
+
 
         // Carica dal server tutte le tracce della playlist
         this.load = (playlist_id) => {
@@ -76,9 +85,18 @@
                 row.appendChild(td);
             });
 
-            // Abilita/disabilita i bottoni
-            this.container.querySelector("#prevBtn").disabled = (blockIndex === 0);
-            this.container.querySelector("#nextBtn").disabled = (blockIndex >= totalBlocks - 1);
+            // Mostra/Nascondi i bottoni dinamicamente
+            const prevContainer = this.container.querySelector(".prev-button");
+            const nextContainer = this.container.querySelector(".next-button");
+
+            if (totalBlocks <= 1) {
+                prevContainer.style.display = "none";
+                nextContainer.style.display = "none";
+            } else {
+                prevContainer.style.display = (blockIndex > 0) ? "block" : "none";
+                nextContainer.style.display = (blockIndex < totalBlocks - 1) ? "block" : "none";
+            }
+
         };
     }
 
