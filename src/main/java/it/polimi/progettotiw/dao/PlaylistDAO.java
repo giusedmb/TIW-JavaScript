@@ -113,7 +113,7 @@ public class PlaylistDAO {
     public void updateTracksOrder(int playlistId, List<Integer> orderedTrackIds) throws SQLException {
         String sql = "UPDATE Playlist_Tracks SET position = ? WHERE playlist_id = ? AND track_id = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            for (int i = orderedTrackIds.size(); i >=0; i--) {
+            for (int i = orderedTrackIds.size()-1; i >0; i--) {
                 ps.setInt(1, i - 1);
                 ps.setInt(2, playlistId);
                 ps.setInt(3, orderedTrackIds.get(i));
