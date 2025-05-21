@@ -74,7 +74,7 @@ public class TrackDAO {
                 + "JOIN Playlist_Tracks pt ON t.track_id = pt.track_id "
                 + "JOIN Albums a ON t.album_id = a.album_id "
                 + "WHERE pt.playlist_id = ? "
-                + "ORDER BY pt.position ASC, a.performer ASC, a.publication_year ASC, t.title ASC";
+                + "ORDER BY pt.position DESC, a.performer ASC, a.publication_year ASC, t.title ASC";
 
         List<Track> tracks = new ArrayList<>();
         try (PreparedStatement ps = con.prepareStatement(sql)) {
