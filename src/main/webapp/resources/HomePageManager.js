@@ -404,7 +404,7 @@
                     <a href="#" class="track-link" data-track-id="${t.track_id}">
                         <div class="track-title">${t.title}</div>
                         ${t.album.image ?
-                    `<img src="uploads/${t.album.image}" alt="cover" class="track-image">` : ''}
+                    `<img src="uploads/${t.album.image}" alt="cover" class="track-image" style="width: 300px; height: auto;">` : ''}
                     </a>
                 `;
                 row.appendChild(td);
@@ -517,7 +517,7 @@
                     <div class="player-content">
                         <div class="album-cover" >
                             ${track.album.image
-                        ? `<img src="uploads/${track.album.image}" alt="Album cover"/>` : ''}
+                        ? `<img src="uploads/${track.album.image}" alt="Album cover" style="width: 300px; height: auto;"/>` : ''}
                         </div>
                         <div class="track-info">
                             <dl class="info-list">
