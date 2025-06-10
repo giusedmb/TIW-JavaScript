@@ -2,6 +2,7 @@ package it.polimi.progettotiw.controllers;
 
 import it.polimi.progettotiw.ConnectionHandler;
 import it.polimi.progettotiw.beans.User;
+import it.polimi.progettotiw.dao.AlbumDAO;
 import it.polimi.progettotiw.dao.TrackDAO;
 
 import jakarta.servlet.ServletContext;
@@ -100,7 +101,7 @@ public class UploadTrack extends HttpServlet {
             String relativePath = user.getUsername() + "/audio/" + storedName;
             try {
                 connection.setAutoCommit(false);
-
+                new AlbumDAO(connection).isOwnedBy(albumId, user.getUsername());
                 new TrackDAO(connection).create(
                         title, relativePath, albumId, genreName, user.getUsername()
                 );

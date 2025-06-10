@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import it.polimi.progettotiw.beans.Track;
+import it.polimi.progettotiw.dao.TrackDAO;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -50,6 +52,11 @@ public class AddTracksToPlaylist extends HttpServlet {
             connection.setAutoCommit(false);
 
             PlaylistDAO playlistDAO = new PlaylistDAO(connection);
+            TrackDAO trackDAO = new TrackDAO(connection);
+            for (String trackIdStr : trackIdsArray) {
+                int trackId = Integer.parseInt(trackIdStr);
+                trackDAO.isOwnedBy(trackId, request.getRemoteUser());
+            }
             for (String trackIdStr : trackIdsArray) {
                 int trackId = Integer.parseInt(trackIdStr);
                 playlistDAO.addTrackToPlaylist(playlistId, trackId);
