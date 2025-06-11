@@ -16,3 +16,10 @@ function makeCall(method, url, formElement, cback, reset = true) {
         }
     }
 }
+
+function redirectToErrorPage(req) {
+    const status = req.status;
+    const message = req.responseText || 'An unknown client-side error occurred.';
+    const encodedMessage = encodeURIComponent(message);
+    window.location.href = `ErrorHandler?status=${status}&message=${encodedMessage}`;
+}

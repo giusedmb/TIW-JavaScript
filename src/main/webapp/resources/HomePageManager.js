@@ -178,11 +178,8 @@
                 }
                 modal.dataset.playlistId = playlistId;
                 modal.dataset.originalTrackCount = resp.tracks.length;
-            } else if (req.status === 403) {
-                window.location.href = req.getResponseHeader("Location");
-                sessionStorage.removeItem("username");
             } else {
-                alert(req.responseText || "Error in tracks loading");
+                redirectToErrorPage(req);
                 closeReorderModal();
             }
         });
@@ -243,12 +240,7 @@
             if (req.status === 200) {
                 closeReorderModal();
                 alert("Order saved successfully!");
-            } else if (req.status === 403) {
-                window.location.href = req.getResponseHeader("Location");
-                sessionStorage.removeItem("username");
-            } else {
-                alert(req.responseText || "Error in saving");
-            }
+            } else   redirectToErrorPage(req);
         });
     });
 
@@ -327,12 +319,7 @@
                             this.renderAvailableTracks(availableTracks);
                         }
                     });
-                } else if (req.status === 403) {
-                    window.location.href = req.getResponseHeader("Location");
-                    sessionStorage.removeItem("username");
-                } else {
-                    this.msg.textContent = req.responseText;
-                }
+                } else   redirectToErrorPage(req);
             });
         };
 
@@ -426,12 +413,7 @@
                     this.currentBlock = 0;
                     this.load(this.currentPlaylistId);
                     this.msg.textContent = "Tracks added successfully!";
-                } else if (req.status === 403) {
-                    window.location.href = req.getResponseHeader("Location");
-                    sessionStorage.removeItem("username");
-                } else {
-                    alert(req.responseText || "Unknown error");
-                }
+                } else   redirectToErrorPage(req);
             });
             form.removeChild(playlistIdInput);
         };
@@ -479,12 +461,7 @@
                         .addEventListener('click', () => {
                             this.container.style.display = 'none';
                         });
-                } else if (req.status === 403) {
-                    window.location.href = req.getResponseHeader("Location");
-                    sessionStorage.removeItem("username");
-                } else {
-                    this.msg.textContent = req.responseText;
-                }
+                } else   redirectToErrorPage(req);
             });
         };
     }
@@ -510,12 +487,7 @@
                         return;
                     }
                     this.update(data);
-                } else if (req.status === 403) {
-                    window.location.href = req.getResponseHeader("Location");
-                    sessionStorage.removeItem("username");
-                } else {
-                    this.msg.textContent = req.responseText;
-                }
+                } else   redirectToErrorPage(req);
             });
         };
 
@@ -574,12 +546,7 @@
                     if (req.status === 200) {
                         orchestrator.refresh();
                         alert("Album created successfully!");
-                    } else if (req.status === 403) {
-                        window.location.href = req.getResponseHeader("Location");
-                        sessionStorage.removeItem("username");
-                    } else {
-                        alert(req.responseText || "Unknown error");
-                    }
+                    } else   redirectToErrorPage(req);
                 });
             }, false);
         };
@@ -631,12 +598,7 @@
                             if (detail) detail.style.display = 'block';
                         });
                     }
-                } else if (req.status === 403) {
-                    window.location.href = req.getResponseHeader("Location");
-                    sessionStorage.removeItem("username");
-                } else {
-                    this.msg.textContent = req.responseText;
-                }
+                } else   redirectToErrorPage(req);
             });
 
             makeCall("GET", URL_GENRE_LIST, null, req => {
@@ -664,12 +626,7 @@
                             selGenre.appendChild(o);
                         });
                     }
-                } else if (req.status === 403) {
-                    window.location.href = req.getResponseHeader("Location");
-                    sessionStorage.removeItem("username");
-                } else {
-                    this.msg.textContent = req.responseText;
-                }
+                } else redirectToErrorPage(req);
             });
         };
 
@@ -679,10 +636,7 @@
                 makeCall("POST", URL_UPLOAD_TRACK, this.form, req => {
                     if (req.readyState !== XMLHttpRequest.DONE) return;
                     if (req.status === 200) orchestrator.refresh();
-                    else if (req.status === 403) {
-                        window.location.href = req.getResponseHeader("Location");
-                        sessionStorage.removeItem("username");
-                    } else alert(req.responseText);
+                    else redirectToErrorPage(req);
                 });
             }, false);
         };
@@ -736,10 +690,7 @@
                 makeCall("POST", URL_SAVE_PLAYLIST, this.form, req => {
                     if (req.readyState !== XMLHttpRequest.DONE) return;
                     if (req.status === 200) orchestrator.refresh();
-                    else if (req.status === 403) {
-                        window.location.href = req.getResponseHeader("Location");
-                        sessionStorage.removeItem("username");
-                    } else alert(req.responseText);
+                    else redirectToErrorPage(req);
                 });
             }, false);
         };

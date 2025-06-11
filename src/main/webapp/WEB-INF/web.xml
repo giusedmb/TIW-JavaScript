@@ -11,11 +11,11 @@
     </context-param>
     <context-param>
         <param-name>dbUser</param-name>
-        <param-value>giacomo</param-value>
+        <param-value>giuse</param-value>
     </context-param>
     <context-param>
         <param-name>dbPassword</param-name>
-        <param-value>ciao333</param-value>
+        <param-value>Giuseppe</param-value>
     </context-param>
     <context-param>
         <param-name>dbDriver</param-name>
@@ -23,7 +23,7 @@
     </context-param>
     <context-param>
         <param-name>UPLOAD_BASE</param-name>
-        <param-value>/home/mishow/UploadsTIW</param-value>
+        <param-value>/Users/giuseppedambrosi/uploadsForProject</param-value>
     </context-param>
     <error-page>
         <exception-type>java.lang.IllegalStateException</exception-type>

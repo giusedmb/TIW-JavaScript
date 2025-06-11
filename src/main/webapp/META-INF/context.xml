@@ -1,7 +1,7 @@
 <Context>
     <Resources>
         <PreResources className="org.apache.catalina.webresources.DirResourceSet"
-                      base="/home/mishow/UploadsTIW"
+                      base="/Users/giuseppedambrosi/uploadsForProject"
                       webAppMount="/uploads" />
     </Resources>
 </Context>

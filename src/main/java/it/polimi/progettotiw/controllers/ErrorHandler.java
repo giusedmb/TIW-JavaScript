@@ -13,6 +13,10 @@ import org.thymeleaf.templateresolver.WebApplicationTemplateResolver;
 import org.thymeleaf.web.servlet.JakartaServletWebApplication;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @WebServlet("/ErrorHandler")
 public class ErrorHandler extends HttpServlet {
@@ -28,66 +32,96 @@ public class ErrorHandler extends HttpServlet {
         WebApplicationTemplateResolver templateResolver = new WebApplicationTemplateResolver(application);
         templateResolver.setTemplateMode(TemplateMode.HTML);
         templateResolver.setSuffix(".html");
-
+        templateResolver.setPrefix("/");
         templateEngine = new TemplateEngine();
         templateEngine.setTemplateResolver(templateResolver);
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         processError(request, response);
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         processError(request, response);
     }
 
-    private void processError(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-        // Estrai attributi standard di errore
-        Integer statusCode = (Integer) request.getAttribute("jakarta.servlet.error.status_code");
-        String requestUri = (String)  request.getAttribute("jakarta.servlet.error.request_uri");
-        Throwable exception = (Throwable) request.getAttribute("jakarta.servlet.error.exception");
-
-        // Costruisci titolo e messaggio
-        String title = "Error" + (statusCode != null ? " " + statusCode : "");
-        String message = "An unexpected error occurred.";
+    private void processError(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        Integer statusCode = null;
+        String errorMessage = null;
+        String requestUri = null;
         String exceptionType = "N/A";
-        String stackTrace = "";
+        String stackTrace = "Not available.";
 
-        if (exception != null) {
-            Throwable root = exception.getCause() != null ? exception.getCause() : exception;
-            exceptionType = root.getClass().getName();
-            message = root.getMessage() != null ? root.getMessage() : message;
+        // --- Logica per determinare la fonte dell'errore ---
 
-            // riduco lo stack trace a prime 3 righe
-            StackTraceElement[] trace = root.getStackTrace();
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < Math.min(3, trace.length); i++) {
-                sb.append(trace[i].toString()).append("<br/>");
+        // 1. Controlla se è un errore gestito dal container (ha gli attributi standard)
+        Object statusCodeObj = request.getAttribute("jakarta.servlet.error.status_code");
+        if (statusCodeObj != null) {
+            statusCode = (Integer) statusCodeObj;
+            errorMessage = (String) request.getAttribute("jakarta.servlet.error.message");
+            requestUri = (String) request.getAttribute("jakarta.servlet.error.request_uri");
+            Throwable exception = (Throwable) request.getAttribute("jakarta.servlet.error.exception");
+
+            if (exception != null) {
+                Throwable root = exception.getCause() != null ? exception.getCause() : exception;
+                exceptionType = root.getClass().getName();
+                if (errorMessage == null || errorMessage.isEmpty()) {
+                    errorMessage = root.getMessage();
+                }
+                // Prendi lo stack trace completo
+                StringWriter sw = new StringWriter();
+                root.printStackTrace(new PrintWriter(sw));
+                stackTrace = escapeHTML(sw.toString()).replace("\n", "<br/>").replace("\t", "    ");
             }
-            stackTrace = sb.toString();
+        }
+        // 2. Altrimenti, controlla se è un redirect da AJAX (ha i parametri nell'URL)
+        else if (request.getParameter("status") != null) {
+            try {
+                statusCode = Integer.parseInt(request.getParameter("status"));
+            } catch (NumberFormatException e) {
+                statusCode = 500; // Default
+            }
+            // Leggi il messaggio dall'URL. Il server lo decodifica in automatico.
+            errorMessage = request.getParameter("message");
+            requestUri = "N/A (from client-side action)";
+        }
+        // 3. Caso di fallback (accesso diretto senza parametri)
+        else {
+            statusCode = 500;
+            errorMessage = "Error page accessed directly without error information.";
+            requestUri = request.getRequestURI();
         }
 
-        // Imposta lo status della risposta
-        response.setStatus(statusCode != null ? statusCode : HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        // Assicurati che il messaggio non sia mai nullo
+        if (errorMessage == null || errorMessage.isEmpty()) {
+            errorMessage = "An unspecified error occurred.";
+        }
 
-        // Prepara il contesto Thymeleaf
-        WebContext ctx = new WebContext(
-                application.buildExchange(request, response),
-                request.getLocale());
-        ctx.setVariable("errorTitle",    title);
-        ctx.setVariable("errorMessage",  message);
-        ctx.setVariable("statusCode",    statusCode != null ? statusCode : "N/A");
-        ctx.setVariable("requestUri",    requestUri != null ? requestUri : "N/A");
+        // Imposta lo status e il content type della risposta
+        response.setStatus(statusCode);
+        response.setContentType("text/html");
+        response.setCharacterEncoding("UTF-8");
+
+        // Prepara il contesto per Thymeleaf
+        WebContext ctx = new WebContext(application.buildExchange(request, response), request.getLocale());
+
+        ctx.setVariable("errorTitle", "Error " + statusCode);
+        ctx.setVariable("errorMessage", errorMessage);
+        ctx.setVariable("statusCode", statusCode);
+        ctx.setVariable("requestUri", requestUri);
         ctx.setVariable("exceptionType", exceptionType);
-        ctx.setVariable("stackTrace",    stackTrace);
-        ctx.setVariable("backUrl",       "/homePage.html");
+        ctx.setVariable("stackTrace", stackTrace);
+        ctx.setVariable("backUrl", request.getContextPath() + "/homePage.html");
 
-        // Render della pagina
+        // Renderizza la pagina di errore
         templateEngine.process("errorPage", ctx, response.getWriter());
+    }
+
+    // Funzione di utilità per l'escape HTML per prevenire XSS
+    private String escapeHTML(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&").replace("<", "<").replace(">", ">");
     }
 }
