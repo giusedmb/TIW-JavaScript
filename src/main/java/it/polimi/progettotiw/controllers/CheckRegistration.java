@@ -86,16 +86,11 @@ public class CheckRegistration extends HttpServlet {
         UserDAO userDAO = new UserDAO(connection);
 
         try {
-            // Recupera tutti gli utenti registrati
-            ArrayList<User> registeredUsers = userDAO.findAllUsers();
-            for (User regUser : registeredUsers) {
-                if (regUser.getUsername().equals(username)) {
-                    response.getWriter().println("Username Already Taken");
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    return;
-                }
+            if (userDAO.existsByUsername(username)) {
+                response.getWriter().println("Username Already Taken");
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
             }
-
             User u = new User();
             u.setUsername(username);
             u.setPassword(password);

@@ -46,17 +46,12 @@ public class UserDAO {
     }
 
 
-    public ArrayList<User> findAllUsers() throws SQLException {
-        String query = "SELECT username FROM Users ";
+    public boolean existsByUsername(String username) throws SQLException {
+        String query = "SELECT 1 FROM Users WHERE username = ?";
         try (PreparedStatement pstatement = con.prepareStatement(query)) {
-            try (ResultSet result = pstatement.executeQuery()) {
-                ArrayList<User> temp = new ArrayList<>();
-                while (result.next()) {
-                    User u = new User();
-                    u.setUsername(result.getString("username"));
-                    temp.add(u);
-                }
-                return temp;
+            pstatement.setString(1, username);
+            try (ResultSet rs = pstatement.executeQuery()) {
+                return rs.next();
             }
         }
     }
