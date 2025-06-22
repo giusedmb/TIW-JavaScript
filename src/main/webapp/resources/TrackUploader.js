@@ -1,6 +1,6 @@
 function TrackUploader(formElem, msgElem) {
     this.form = formElem;
-    this.msg  = msgElem;
+    this.msg = msgElem;
 
     this.form.querySelector('input[name="audioFile"]')
         .addEventListener("change", e => {
@@ -26,12 +26,14 @@ function TrackUploader(formElem, msgElem) {
 
                 if (albums.length === 0) {
                     const o = document.createElement("option");
-                    o.disabled = true; o.selected = true;
+                    o.disabled = true;
+                    o.selected = true;
                     o.textContent = "No album available";
                     selAlbum.appendChild(o);
                 } else {
                     const placeholder = document.createElement("option");
-                    placeholder.disabled = true; placeholder.selected = true;
+                    placeholder.disabled = true;
+                    placeholder.selected = true;
                     placeholder.textContent = "-- Select album --";
                     selAlbum.appendChild(placeholder);
 
@@ -46,9 +48,16 @@ function TrackUploader(formElem, msgElem) {
                     if (!selAlbum.dataset.listenerAdded) {
                         selAlbum.addEventListener("change", () => {
                             const player = document.getElementById("playerContainer");
-                            if (player) { player.style.display = "none"; player.innerHTML = ""; }
+                            if (player) {
+                                player.hidden = true;
+                                const audio = player.querySelector("#playerAudio");
+                                if (audio) {
+                                    audio.pause();
+                                    audio.src = "";
+                                }
+                            }
                             const detail = document.getElementById("playlistDetailContainer");
-                            if (detail) detail.style.display = "block";
+                            if (detail) detail.hidden = false;
                         });
                         selAlbum.dataset.listenerAdded = "true";
                     }
@@ -67,18 +76,21 @@ function TrackUploader(formElem, msgElem) {
 
                 if (genres.length === 0) {
                     const o = document.createElement("option");
-                    o.disabled = true; o.selected = true;
+                    o.disabled = true;
+                    o.selected = true;
                     o.textContent = "No genre available";
                     selGenre.appendChild(o);
                 } else {
                     const placeholder = document.createElement("option");
-                    placeholder.disabled = true; placeholder.selected = true;
+                    placeholder.disabled = true;
+                    placeholder.selected = true;
                     placeholder.textContent = "-- Select genre --";
                     selGenre.appendChild(placeholder);
 
                     genres.forEach(g => {
                         const o = document.createElement("option");
-                        o.value = g; o.textContent = g;
+                        o.value = g;
+                        o.textContent = g;
                         selGenre.appendChild(o);
                     });
                 }

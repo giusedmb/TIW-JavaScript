@@ -32,8 +32,74 @@
         <tbody id="playlistTableBody">
         </tbody>
     </table>
-    <div id="playerContainer" style="margin-top:2em; display:none;"></div>
-    <div id="playlistDetailContainer" style="margin-top:2em;"></div>
+    <div id="playerContainer" class="track-player" hidden>
+        <div class="player-header">
+            <h2 id="playerTitle"></h2>
+            <button id="closePlayer" class="close-button">Close</button>
+        </div>
+
+        <div class="player-content">
+            <div class="album-cover">
+                <img id="playerCover" class="album-img" alt="Album cover" hidden style="width:300px; height:auto;">
+            </div>
+
+            <div class="track-info">
+                <dl class="info-list">
+                    <dt>Performer:</dt>
+                    <dd id="playerPerformer"></dd>
+                    <dt>Album:</dt>
+                    <dd id="playerAlbum"></dd>
+                    <dt>Genre:</dt>
+                    <dd id="playerGenre"></dd>
+                </dl>
+
+                <audio id="playerAudio" controls></audio>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="playlistDetailContainer" class="playlist-detail" hidden>
+        <div class="detail-header">
+            <h2 id="detailTitle"></h2>
+            <button id="closeBtn" class="close-button">Close</button>
+        </div>
+
+        <div class="playlist-navigation">
+            <button id="prevBtn" class="nav-button prev-button">PREVIOUS</button>
+
+            <div class="tracks-container">
+                <table id="detailTable">
+                    <tr id="detailRow"></tr>
+                </table>
+            </div>
+
+            <button id="nextBtn" class="nav-button next-button">NEXT</button>
+        </div>
+
+        <section class="add-tracks-form">
+            <h3>Add tracks to playlist</h3>
+            <form id="addTracksForm">
+                <div class="checkbox-group" id="availableTracksGroup"></div>
+                <button type="submit" id="addTracksBtn">Add selected tracks</button>
+            </form>
+        </section>
+    </div>
+    <template id="trackCellTpl">
+        <td>
+            <a href="#" class="track-link" data-track-id="">
+                <div class="track-title"></div>
+                <img class="track-image" alt="cover">
+            </a>
+        </td>
+    </template>
+    <template id="checkboxTpl">
+        <div class="checkbox-item">
+            <input type="checkbox" value="">
+            <label></label>
+        </div>
+    </template>
+
 
     <h2>Create a New Album</h2>
     <form id="albumForm" action="#" method="post" enctype="multipart/form-data">

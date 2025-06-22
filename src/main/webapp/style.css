@@ -250,6 +250,10 @@ input[type="checkbox"] {
     transition: transform .3s ease;
 }
 
+.album-img{
+    width: 300px;
+    height: auto;
+}
 /* Album & Player */
 .album-cover img,
 audio {

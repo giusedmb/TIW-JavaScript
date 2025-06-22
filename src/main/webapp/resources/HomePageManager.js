@@ -42,7 +42,7 @@ HomePageManager.prototype.refresh = function (what) {
     this.albumCreator.reset();  this.albumCreator.show();
     this.trackUploader.reset(); this.trackUploader.show();
     this.playlistCreator.reset(); this.playlistCreator.show();
-    this.playlistDetail.container.style.display = "none";
+    this.playlistDetail.container.hidden = true;
 };
 
 

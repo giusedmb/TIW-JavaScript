@@ -1,41 +1,39 @@
 function PlayerView(containerElem, msgElem) {
     this.container = containerElem;
-    this.msg = msgElem;
-    this.load = function (track_id) {
-        this.msg.textContent = "";
-        makeCall("GET", `GetTrackData?track_id=${track_id}`, null, req => {
+    this.msg = msgElem || {textContent: ''};
+    const titleEl = containerElem.querySelector('#playerTitle');
+    const coverEl = containerElem.querySelector('#playerCover');
+    const perfEl = containerElem.querySelector('#playerPerformer');
+    const albumEl = containerElem.querySelector('#playerAlbum');
+    const genreEl = containerElem.querySelector('#playerGenre');
+    const audioEl = containerElem.querySelector('#playerAudio');
+    const closeBtn = containerElem.querySelector('#closePlayer');
+    closeBtn.addEventListener('click', () => (containerElem.hidden = true));
+
+    this.load = track_id => {
+        this.msg.textContent = '';
+
+        makeCall('GET', `GetTrackData?track_id=${track_id}`, null, req => {
             if (req.readyState !== XMLHttpRequest.DONE) return;
+
             if (req.status === 200) {
                 const track = JSON.parse(req.responseText);
-                this.container.innerHTML = `
-                <div class="player-header">
-                    <h2>${track.title}</h2>
-                    <button id="closePlayer">Chiudi</button>
-                </div>
-                <div class="player-content">
-                    <div class="album-cover">
-                        ${track.album.image
-                    ? `<img src="uploads/${track.album.image}" alt="Album cover" style="width: 300px; height: auto;"/>`
-                    : ''}
-                    </div>
-                    <div class="track-info">
-                        <dl class="info-list">
-                            <dt>Performer:</dt><dd>${track.album.performer}</dd>
-                            <dt>Album:</dt><dd>${track.album.title} (${track.album.publicationYear})</dd>
-                            <dt>Genre:</dt><dd>${track.genre_name}</dd>
-                        </dl>
-                        <div class="audio-player">
-                            <audio controls>
-                                <source src="uploads/${track.file_path}" type="audio/mpeg"/>
-                                Your browser does not support the audio element.
-                            </audio>
-                        </div>
-                    </div>
-                </div>`;
-                this.container.style.display = 'block';
-                this.container.querySelector('#closePlayer')
-                    .addEventListener('click', () => this.container.style.display = 'none');
-            } else redirectToErrorPage(req);
+                titleEl.textContent = track.title;
+                perfEl.textContent = track.album.performer;
+                albumEl.textContent = `${track.album.title} (${track.album.publicationYear})`;
+                genreEl.textContent = track.genre_name;
+                audioEl.src = `uploads/${track.file_path}`;
+                if (track.album.image) {
+                    coverEl.src = `uploads/${track.album.image}`;
+                    coverEl.hidden = false;
+                } else {
+                    coverEl.hidden = true;
+                }
+
+                containerElem.hidden = false;
+            } else {
+                redirectToErrorPage(req);
+            }
         });
     };
 }
