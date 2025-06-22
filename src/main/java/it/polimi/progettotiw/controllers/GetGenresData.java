@@ -43,7 +43,9 @@ public class GetGenresData extends HttpServlet {
 
     @Override
     public void destroy() {
-        try { ConnectionHandler.closeConnection(connection); }
-        catch (Exception ignore) {}
+        try {
+            ConnectionHandler.closeConnection(connection);
+        } catch (Exception ignore) {
+        }
     }
 }

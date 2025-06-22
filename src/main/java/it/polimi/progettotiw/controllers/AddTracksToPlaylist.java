@@ -37,8 +37,8 @@ public class AddTracksToPlaylist extends HttpServlet {
         response.setContentType("application/json");
 
 
-       User user = (User) request.getSession().getAttribute("user");
-       String username = user.getUsername();
+        User user = (User) request.getSession().getAttribute("user");
+        String username = user.getUsername();
         if (username == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().println("User not authenticated");
@@ -92,14 +92,30 @@ public class AddTracksToPlaylist extends HttpServlet {
             response.getWriter().println("Tracks added successfully");
 
         } catch (NumberFormatException e) {
-            try { connection.rollback(); } catch (SQLException ex) { log("Rollback failed", ex); }
-            try { connection.setAutoCommit(true); } catch (SQLException acEx) { log("Could not reset autoCommit", acEx); }
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                log("Rollback failed", ex);
+            }
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException acEx) {
+                log("Could not reset autoCommit", acEx);
+            }
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().println("Invalid track id");
 
         } catch (SQLException e) {
-            try { connection.rollback(); } catch (SQLException ex) { log("Rollback failed", ex); }
-            try { connection.setAutoCommit(true); } catch (SQLException acEx) { log("Could not reset autoCommit", acEx); }
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                log("Rollback failed", ex);
+            }
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException acEx) {
+                log("Could not reset autoCommit", acEx);
+            }
             log("Database error in AddTracksToPlaylist", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().println("Server error");

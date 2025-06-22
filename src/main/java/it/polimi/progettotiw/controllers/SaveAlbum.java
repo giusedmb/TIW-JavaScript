@@ -61,7 +61,6 @@ public class SaveAlbum extends HttpServlet {
             String performer = request.getParameter("performer");
             String yearStr = request.getParameter("publicationYear");
             Part imagePart = request.getPart("image");
-            System.out.printf("ciao");
             if (title == null || title.isEmpty()
                     || performer == null || performer.isEmpty()
                     || yearStr == null || yearStr.isEmpty()
@@ -118,7 +117,7 @@ public class SaveAlbum extends HttpServlet {
                 try {
                     connection.rollback();
                 } catch (SQLException rbEx) {
-                    log("Rollback fallito in SaveAlbum", rbEx);
+                    log("Failed rollback", rbEx);
                 }
                 log("Error DB in saving album", e);
                 try {

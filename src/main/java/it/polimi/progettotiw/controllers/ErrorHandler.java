@@ -15,8 +15,6 @@ import org.thymeleaf.web.servlet.JakartaServletWebApplication;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 
 @WebServlet("/ErrorHandler")
 public class ErrorHandler extends HttpServlet {
@@ -48,9 +46,9 @@ public class ErrorHandler extends HttpServlet {
     }
 
     private void processError(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Integer statusCode = null;
-        String errorMessage = null;
-        String requestUri = null;
+        int statusCode;
+        String errorMessage;
+        String requestUri;
         String exceptionType = "N/A";
         String stackTrace = "Not available.";
 
