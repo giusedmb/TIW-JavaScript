@@ -111,7 +111,6 @@ public class ErrorHandler extends HttpServlet {
         ctx.setVariable("requestUri", requestUri);
         ctx.setVariable("exceptionType", exceptionType);
         ctx.setVariable("stackTrace", stackTrace);
-        ctx.setVariable("backUrl", request.getContextPath() + "/homePage.html");
 
         // Renderizza la pagina di errore
         templateEngine.process("errorPage", ctx, response.getWriter());
