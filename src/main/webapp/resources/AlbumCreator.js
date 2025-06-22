@@ -6,6 +6,8 @@ function AlbumCreator(formElem) {
             e.target.value = "";
         }
     });
+    this.show = () => {
+    };
     this.reset = () => this.form.reset();
     this.registerEvents = orchestrator => {
         this.form.addEventListener("submit", e => {
