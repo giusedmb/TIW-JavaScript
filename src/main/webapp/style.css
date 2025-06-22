@@ -172,3 +172,15 @@ audio { width: 100%; display: block; margin: 0 auto; border-radius: 30px; backgr
 }
 .back-link a:hover { background: var(--primary); color: var(--bg); }
 .logout:hover { background: #ccc; }
+
+.detail-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:1rem;
+}
+
+.close-button{
+    margin-left:auto;
+}
+
