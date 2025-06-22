@@ -14,6 +14,7 @@ function TrackUploader(formElem, msgElem) {
         this.form.reset();
         this.show();
     };
+
     this.show = () => {
         makeCall("GET", "GetAlbumData", null, req => {
             if (req.readyState !== XMLHttpRequest.DONE) return;
@@ -44,7 +45,6 @@ function TrackUploader(formElem, msgElem) {
                         selAlbum.appendChild(o);
                     });
 
-                    /* listener aggiunto solo la 1ª volta */
                     if (!selAlbum.dataset.listenerAdded) {
                         selAlbum.addEventListener("change", () => {
                             const player = document.getElementById("playerContainer");
@@ -98,7 +98,7 @@ function TrackUploader(formElem, msgElem) {
 
     this.registerEvents = orchestrator => {
         this.form.addEventListener("submit", e => {
-            e.preventDefault();
+            e.preventDefault();   // niente refresh pagina
 
             makeCall("POST", "UploadTrack", this.form, req => {
                 if (req.readyState !== XMLHttpRequest.DONE) return;

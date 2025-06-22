@@ -12,59 +12,79 @@
     const show = el => el.classList.remove("is-hidden");
     const hide = el => el.classList.add("is-hidden");
 
-    let dragSrcEl = null;
-    let dragTarget = null;
-    let dragPosition = null;
+    // variabili di stato per il drag-and-drop
+    let dragSrcEl = null; // <li> che sto trascinando
+    let dragTarget = null; // <li> attualmente sotto il cursore
+    let dragPosition = null; // stringa "above" oppure "below" usata nel drop
 
     function handleDragStart(e) {
-        dragSrcEl = e.currentTarget;
+        dragSrcEl = e.currentTarget; // salvo quale elemento sto muovendo
         e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", ""); // FF fix
-        dragSrcEl.classList.add("dragging");
+        e.dataTransfer.setData("text/plain", ""); // obbligatorio in Firefox
+        dragSrcEl.classList.add("dragging");   // aggiunge stile di evidenziazione
     }
 
+    //il cursore passa sopra un altro <li>
     function handleDragOver(e) {
-        e.preventDefault();
-        if (dragTarget) dragTarget.classList.remove("drag-over", "drag-above", "drag-below");
+        e.preventDefault(); // necessario per abilitare il drop
 
-        const target = e.target.closest("li");
+        // rimuove eventuali classi di evidenziazione dal precedente target
+        if (dragTarget) {
+            dragTarget.classList.remove("drag-over", "drag-above", "drag-below");
+        }
+
+        const target = e.target.closest("li"); // trova il <li> reale sotto il puntatore
         if (!target || target === dragSrcEl) return;
 
         dragTarget = target;
+
+        // determina se siamo sopra o sotto la metà verticale del <li>
         const rect = target.getBoundingClientRect();
         const midpoint = rect.top + rect.height / 2;
         dragPosition = e.clientY < midpoint ? "above" : "below";
-        target.classList.add("drag-over",
-            dragPosition === "above" ? "drag-above" : "drag-below");
+
+        // aggiunge la classe che fa comparire la riga guida
+        target.classList.add(
+            "drag-over",
+            dragPosition === "above" ? "drag-above" : "drag-below"
+        );
     }
 
+    // cancella TUTTE le classi legate al drag sui <li>
     function clearDragClasses() {
-        document.querySelectorAll("#reorderList li")
-            .forEach(li => li.classList.remove("dragging",
-                "drag-over", "drag-above", "drag-below"));
+        document.querySelectorAll("#reorderList li").forEach(li => {
+            li.classList.remove("dragging", "drag-over", "drag-above", "drag-below");
+        });
         dragSrcEl = dragTarget = null;
     }
 
-    function handleDragLeave(e){
-        if (dragTarget){
-            dragTarget.classList.remove("drag-over","drag-above","drag-below");
-            dragTarget = null;          // ok azzerare SOLO 'dragTarget'
+    // il cursore esce da un <li> senza rilasciare
+    function handleDragLeave() {
+        if (dragTarget) {
+            dragTarget.classList.remove("drag-over", "drag-above", "drag-below");
+            dragTarget = null;
         }
     }
 
+    // l’utente rilascia il mouse
     function handleDrop(e) {
-        e.stopPropagation();
+        e.stopPropagation();// blocca la propagazione dell’evento
         if (!dragSrcEl) return;
 
         const targetLi = e.target.closest("li");
-        const ul = list;
 
+        // caso 1: drop sopra un altro <li> valido (non se stesso)
         if (targetLi && targetLi !== dragSrcEl) {
-            dragPosition === "above"
-                ? ul.insertBefore(dragSrcEl, targetLi)
-                : ul.insertBefore(dragSrcEl, targetLi.nextSibling);
+            if (dragPosition === "above") {
+                list.insertBefore(dragSrcEl, targetLi);
+            } else {
+                list.insertBefore(dragSrcEl, targetLi.nextSibling);
+            }
         }
-        if (!targetLi) ul.appendChild(dragSrcEl);
+        //caso 2: drop nello spazio vuoto in fondo alla lista
+        else if (!targetLi) {
+            list.appendChild(dragSrcEl);
+        }
 
         clearDragClasses();
     }
@@ -72,15 +92,15 @@
     function openReorderModal(playlistId) {
         show(overlay);
         show(modal);
-        list.innerHTML = "";
+        list.innerHTML = ""; // pulizia lista
         show(loadingEl);
-        hide(list);
-
+        hide(list); // nasconde la <ul> finché non arrivano i dati
         loadPlaylistTracks(playlistId);
     }
 
-    window.openReorderModal = openReorderModal; // globale come prima
+    window.openReorderModal = openReorderModal; // per esportarlo e usarlo in altre parti
 
+    // chiusura generale della finestra
     function closeReorderModal() {
         hide(overlay);
         hide(modal);
@@ -89,6 +109,8 @@
 
     overlay.addEventListener("click", closeReorderModal);
     btnCancel.addEventListener("click", closeReorderModal);
+
+    // uscita rapida con tasto ESC
     document.addEventListener("keydown", e => {
         if (e.key === "Escape" && !overlay.classList.contains("is-hidden")) {
             closeReorderModal();
@@ -110,17 +132,19 @@
                     closeReorderModal();
                     return;
                 }
+
                 const {tracks} = JSON.parse(req.responseText);
                 if (tracks.length === 0) {
-                    list.innerHTML =
-                        `<li style="text-align:center;cursor:default;">No tracks in this playlist</li>`;
+                    list.innerHTML = '<li style="text-align:center;cursor:default;">Nessun brano</li>';
                 } else {
+                    // creo dinamicamente un <li> per ogni brano
                     tracks.forEach(t => {
                         const li = document.createElement("li");
                         li.textContent = t.title;
                         li.dataset.trackId = t.track_id;
                         li.draggable = true;
 
+                        // collego tutti i listener drag & drop
                         li.addEventListener("dragstart", handleDragStart);
                         li.addEventListener("dragover", handleDragOver);
                         li.addEventListener("dragleave", handleDragLeave);
@@ -130,6 +154,8 @@
                         list.appendChild(li);
                     });
                 }
+
+                //memorizzo informazioni utili per il salvataggio del nuovo ordine nel caricamento
                 modal.dataset.playlistId = playlistId;
                 modal.dataset.originalTrackCnt = tracks.length;
             });
@@ -137,54 +163,52 @@
 
     btnSave.addEventListener("click", () => {
         const originalCnt = +modal.dataset.originalTrackCnt || 0;
-        const items       = [...document.querySelectorAll("#reorderList li")];
+        const items = [...document.querySelectorAll("#reorderList li")];
 
-        if (items.length === 0){
-            alert("No tracks to save");
+        // validazione di base
+        if (items.length === 0) {
+            alert("Nessun brano da salvare");
             return;
         }
         if (items.length !== originalCnt) {
-            alert(`Error: track number changed (original: ${originalCnt}, actual: ${items.length})`);
+            alert(`Errore: numero di brani cambiato (prima: ${originalCnt}, ora: ${items.length})`);
             return;
         }
 
         btnSave.disabled = true;
         const oldText = btnSave.textContent;
-        btnSave.textContent = "Saving…";
+        btnSave.textContent = "Salvataggio...";
 
         const tempForm = document.createElement("form");
 
         const inputPlaylist = document.createElement("input");
-        inputPlaylist.type  = "hidden";
-        inputPlaylist.name  = "playlist_id";
+        inputPlaylist.type = "hidden";
+        inputPlaylist.name = "playlist_id";
         inputPlaylist.value = modal.dataset.playlistId;
         tempForm.appendChild(inputPlaylist);
 
         items.forEach(li => {
             const inp = document.createElement("input");
-            inp.type  = "hidden";
-            inp.name  = "trackIds[]";
+            inp.type = "hidden";
+            inp.name = "trackIds[]";
             inp.value = li.dataset.trackId;
             tempForm.appendChild(inp);
         });
 
         makeCall("POST", URL_SAVE_ORDER, tempForm, req => {
-            btnSave.disabled  = false;
+            btnSave.disabled = false;
             btnSave.textContent = oldText;
-
             if (req.readyState !== XMLHttpRequest.DONE) return;
+
             if (req.status === 200) {
                 document.dispatchEvent(new CustomEvent("playlistOrderSaved", {
-                    detail: { playlistId: +modal.dataset.playlistId }
+                    detail: {playlistId: +modal.dataset.playlistId}
                 }));
-
                 closeReorderModal();
-                alert("Order saved successfully!");
+                alert("Ordine salvato!");
             } else {
                 redirectToErrorPage(req);
             }
         });
     });
-
-
 })();
