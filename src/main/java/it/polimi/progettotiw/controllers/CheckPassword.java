@@ -13,11 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import jakarta.servlet.http.HttpSession;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.WebContext;
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.web.servlet.JakartaServletWebApplication;
-import org.thymeleaf.templateresolver.WebApplicationTemplateResolver;
 
 import it.polimi.progettotiw.beans.User;
 import it.polimi.progettotiw.dao.UserDAO;
@@ -35,7 +30,6 @@ public class CheckPassword extends HttpServlet {
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        // getting and sanitizing parameters
         String usr = request.getParameter("username");
         String pwd = request.getParameter("password");
         HttpSession session = request.getSession(false);
