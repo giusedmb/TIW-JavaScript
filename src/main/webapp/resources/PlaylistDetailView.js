@@ -12,7 +12,7 @@ function PlaylistDetailView(containerElem, msgElem, playerView) {
         this.container.innerHTML = `
             <div class="detail-header">
                 <h2 id="detailTitle"></h2>
-                <button id="closeBtn" class="close-button">Close ✕</button>
+                <button id="closeBtn" class="close-button">Close</button>
             </div>
 
             <div class="playlist-navigation">
