@@ -114,27 +114,32 @@ function PlaylistDetailView(containerElem, msgElem, playerView) {
         const tpl = document.getElementById('checkboxTpl');
 
         if (tracks.length === 0) {
-            availWrap.innerHTML = '<div class="no-tracks">No tracks available to add</div>';
+            availWrap.innerHTML =
+                '<div class="no-tracks">No tracks available to add</div>';
             addBtn.disabled = true;
             return;
         }
 
         tracks.forEach(t => {
             const node = tpl.content.cloneNode(true);
-            const input = node.querySelector('input[type="checkbox"]');
-            const label = node.querySelector('label');
 
-            input.id = `track_${t.track_id}`;
-            input.name = 'trackIds[]';
-            input.value = t.track_id;
+            // input e label nel nuovo template
+            const cb = node.querySelector('input[type="checkbox"]');
+            const lbl = node.querySelector('label');
 
-            label.htmlFor = input.id;
-            label.textContent = `${t.title} (${t.album.performer} – ${t.album.publicationYear})`;
+            // ID UNIVOCO → niente collisioni con il form “Create Playlist”
+            cb.id = `add_track_${t.track_id}`;
+            cb.name = 'trackIds[]';
+            cb.value = t.track_id;
+
+            lbl.htmlFor = cb.id;
+            lbl.textContent = `${t.title} (${t.album.performer} – ${t.album.publicationYear})`;
 
             availWrap.appendChild(node);
         });
         addBtn.disabled = false;
     };
+
 
     this.handleAddTracks = e => {
         e.preventDefault();
