@@ -49,17 +49,23 @@ public class SavePlaylistOrder extends HttpServlet {
 
         PlaylistDAO playlistDAO = new PlaylistDAO(connection);
         try {
+            connection.setAutoCommit(false);
             if (!playlistDAO.isOwnedBy(playlistId, username)) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 connection.rollback();
                 return;
             }
             List<Integer> orderedTrackIds = new ArrayList<>();
-            for (String s : trackIdsParam) {
-                orderedTrackIds.add(Integer.parseInt(s));
+            try {
+                for (String s : trackIdsParam) {
+                    orderedTrackIds.add(Integer.parseInt(s));
+                }
+            } catch (NumberFormatException ex) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "trackIds non validi");
+                connection.rollback();
+                return;
             }
             try {
-                connection.setAutoCommit(false);
                 playlistDAO.updateTracksOrder(playlistId, orderedTrackIds);
                 connection.commit();
             } catch (SQLException e) {

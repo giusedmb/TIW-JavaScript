@@ -99,27 +99,23 @@ public class Checker implements Filter {
             if (uri.startsWith(context + "/GetTrackData")) {
                 String idStr = req.getParameter("track_id");
                 if (idStr == null || idStr.isEmpty()) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("Missing track_id parameter");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing track_id parameter");
                     return;
                 }
                 int trackId;
                 try {
                     trackId = Integer.parseInt(idStr);
                 } catch (NumberFormatException e) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("track_id format not valid");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "track_id format not valid");
                     return;
                 }
                 try {
                     if (!trackDAO.isOwnedBy(trackId, currentUser)) {
-                        res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                        res.getWriter().println("You do not own this track.");
+                        res.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not own this track.");
                         return;
                     }
                 } catch (SQLException e) {
-                    res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    res.getWriter().println("Database error");
+                    res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
                     return;
                 }
             }
@@ -127,27 +123,23 @@ public class Checker implements Filter {
             if (uri.startsWith(context + "/GetPlaylistData")) {
                 String idStr = req.getParameter("playlist_id");
                 if (idStr == null || idStr.isEmpty()) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("Missing playlist_id parameter");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing playlist_id parameter");
                     return;
                 }
                 int playlistId;
                 try {
                     playlistId = Integer.parseInt(idStr);
                 } catch (NumberFormatException e) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("playlist_id format not valid");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "playlist_id format not valid");
                     return;
                 }
                 try {
                     if (!playlistDAO.isOwnedBy(playlistId, currentUser)) {
-                        res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                        res.getWriter().println("You do not own this playlist.");
+                        res.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not own this playlist.");
                         return;
                     }
                 } catch (SQLException e) {
-                    res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    res.getWriter().println("Database error");
+                    res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
                     return;
                 }
             }
@@ -155,52 +147,44 @@ public class Checker implements Filter {
             if (uri.startsWith(context + "/AddTracksToPlaylist")) {
                 String idStr = req.getParameter("playlist_id");
                 if (idStr == null || idStr.isEmpty()) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("Missing playlist_id parameter");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing playlist_id parameter");
                     return;
                 }
                 int playlistId;
                 try {
                     playlistId = Integer.parseInt(idStr);
                 } catch (NumberFormatException e) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("playlist_id format not valid");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "playlist_id format not valid");
                     return;
                 }
                 try {
                     if (!playlistDAO.isOwnedBy(playlistId, currentUser)) {
-                        res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                        res.getWriter().println("You do not own this playlist");
+                        res.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not own this playlist");
                         return;
                     }
                 } catch (SQLException e) {
-                    res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    res.getWriter().println("Database error");
+                    res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
                     return;
                 }
 
                 String[] trackIdsParam = req.getParameterValues("trackIds[]");
                 if (trackIdsParam == null || trackIdsParam.length == 0) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("No track selected");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "No track selected");
                     return;
                 }
                 try {
                     List<Integer> trackIds = Stream.of(trackIdsParam).map(Integer::parseInt).toList();
                     for (Integer tId : trackIds) {
                         if (!trackDAO.isOwnedBy(tId, currentUser)) {
-                            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                            res.getWriter().println("You do not own the track " + tId);
+                            res.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not own the track " + tId);
                             return;
                         }
                     }
                 } catch (NumberFormatException e) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("One or more trackIds are not valid");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "One or more trackIds are not valid");
                     return;
                 } catch (SQLException e) {
-                    res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    res.getWriter().println("Database error");
+                    res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
                     return;
                 }
             }
@@ -212,18 +196,15 @@ public class Checker implements Filter {
                         List<Integer> trackIds = Stream.of(trackIdsParam).map(Integer::parseInt).toList();
                         for (Integer tId : trackIds) {
                             if (!trackDAO.isOwnedBy(tId, currentUser)) {
-                                res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                                res.getWriter().println("You do not own the track " + tId);
+                                res.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not own the track " + tId);
                                 return;
                             }
                         }
                     } catch (NumberFormatException e) {
-                        res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                        res.getWriter().println("One or more trackIds are not valid");
+                        res.sendError(HttpServletResponse.SC_BAD_REQUEST, "One or more trackIds are not valid");
                         return;
                     } catch (SQLException e) {
-                        res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                        res.getWriter().println("Database error");
+                        res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
                         return;
                     }
                 }
@@ -232,45 +213,38 @@ public class Checker implements Filter {
             if (uri.startsWith(context + "/SavePlaylistOrder")) {
                 String idStr = req.getParameter("playlist_id");
                 if (idStr == null || idStr.isEmpty()) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("Missing playlist_id parameter");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing playlist_id parameter");
                     return;
                 }
                 int playlistId;
                 try {
                     playlistId = Integer.parseInt(idStr);
                 } catch (NumberFormatException e) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("playlist_id format not valid");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "playlist_id format not valid");
                     return;
                 }
                 try {
                     if (!playlistDAO.isOwnedBy(playlistId, currentUser)) {
-                        res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                        res.getWriter().println("You do not own this playlist");
+                        res.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not own this playlist");
                         return;
                     }
                     String[] trackIdsParam = req.getParameterValues("trackIds[]");
                     if (trackIdsParam == null || trackIdsParam.length == 0) {
-                        res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                        res.getWriter().println("No trackIds provided for reordering");
+                        res.sendError(HttpServletResponse.SC_BAD_REQUEST, "No trackIds provided for reordering");
                         return;
                     }
                     List<Integer> trackIds = Stream.of(trackIdsParam).map(Integer::parseInt).toList();
                     for (Integer tId : trackIds) {
                         if (!trackDAO.isOwnedBy(tId, currentUser)) {
-                            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                            res.getWriter().println("You do not own the track " + tId);
+                            res.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not own the track " + tId);
                             return;
                         }
                     }
                 } catch (NumberFormatException e) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("One or more trackIds are not valid");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "One or more trackIds are not valid");
                     return;
                 } catch (SQLException e) {
-                    res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    res.getWriter().println("Database error");
+                    res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
                     return;
                 }
             }
@@ -278,27 +252,23 @@ public class Checker implements Filter {
             if (uri.startsWith(context + "/UploadTrack")) {
                 String albumIdStr = req.getParameter("albumId");
                 if (albumIdStr == null || albumIdStr.isEmpty()) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("Missing albumId parameter");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing albumId parameter");
                     return;
                 }
                 int albumId;
                 try {
                     albumId = Integer.parseInt(albumIdStr);
                 } catch (NumberFormatException e) {
-                    res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    res.getWriter().println("albumId format not valid");
+                    res.sendError(HttpServletResponse.SC_BAD_REQUEST, "albumId format not valid");
                     return;
                 }
                 try {
                     if (!albumDAO.isOwnedBy(albumId, currentUser)) {
-                        res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                        res.getWriter().println("You do not own this album");
+                        res.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not own this album");
                         return;
                     }
                 } catch (SQLException e) {
-                    res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    res.getWriter().println("Database error");
+                    res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
                     return;
                 }
             }
@@ -307,12 +277,7 @@ public class Checker implements Filter {
             chain.doFilter(request, response);
 
         } catch (SQLException e) {
-            res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            try {
-                res.getWriter().println("Database connection error.");
-            } catch (IOException ioException) {
-                // Ignore if writer cannot be obtained
-            }
+            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database connection error.");
         }
     }
 

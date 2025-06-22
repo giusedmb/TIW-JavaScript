@@ -4,6 +4,7 @@ import it.polimi.progettotiw.ConnectionHandler;
 import it.polimi.progettotiw.beans.User;
 import it.polimi.progettotiw.dao.PlaylistDAO;
 
+import it.polimi.progettotiw.dao.TrackDAO;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -45,15 +46,38 @@ public class SavePlaylist extends HttpServlet {
             return;
         }
 
-        List<Integer> trackIds = (trackIdsParam == null)
-                ? List.of()
-                : Arrays.stream(trackIdsParam)
-                .map(Integer::valueOf)
-                .collect(Collectors.toList());
+        List<Integer> trackIds;
+        try {
+            trackIds = (trackIdsParam == null)
+                    ? List.of()
+                    : Arrays.stream(trackIdsParam)
+                    .map(idStr -> {
+                        try {
+                            return Integer.valueOf(idStr);
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Invalid track id: " + idStr, e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException badParam) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, badParam.getMessage());
+            return;
+        }
+        if (trackIds.isEmpty()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Select at least one track");
+            return;
+        }
 
+        TrackDAO trackDAO = new TrackDAO(connection);
         try {
             connection.setAutoCommit(false);
-
+            for (Integer trackId : trackIds) {
+                if (!trackDAO.isOwnedBy(trackId, user.getUsername())) {
+                    connection.rollback();
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Track non autorizzato");
+                    return;
+                }
+            }
             new PlaylistDAO(connection)
                     .createPlaylistWithTracks(title, user.getUsername(), trackIds);
 
