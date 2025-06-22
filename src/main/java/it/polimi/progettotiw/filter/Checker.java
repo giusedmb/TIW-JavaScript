@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -18,10 +20,16 @@ import java.util.stream.Stream;
 
 public class Checker implements Filter {
     private ServletContext ctx;
+    private Path uploadsBaseDir;
 
     @Override
-    public void init(FilterConfig filterConfig) {
+    public void init(FilterConfig filterConfig) throws ServletException {
         this.ctx = filterConfig.getServletContext();
+        String uploadParam = ctx.getInitParameter("UPLOAD_BASE");
+        if (uploadParam == null) {
+            throw new ServletException("UPLOAD_BASE non configurato");
+        }
+        uploadsBaseDir = Paths.get(uploadParam).toAbsolutePath().normalize();
     }
 
     @Override
@@ -73,17 +81,20 @@ public class Checker implements Filter {
             AlbumDAO albumDAO = new AlbumDAO(connection);
 
             if (uri.startsWith(context + "/uploads/")) {
-                String[] parts = uri.substring(context.length()).split("/");
-                // path is /uploads/<username>/<type>/<filename> -> length should be 5
-                if (parts.length < 3 || !parts[2].equals(currentUser)) {
-                    res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    res.getWriter().println("Access denied to this resource.");
+                // rimuovo prefisso "/context/uploads/"
+                String relative = uri.substring((context + "/uploads/").length());
+                // risolvo e normalizzo
+                Path requested = uploadsBaseDir.resolve(relative).normalize();
+                // directory base dell'utente
+                Path userDir = uploadsBaseDir.resolve(currentUser).normalize();
+                if (!requested.startsWith(userDir)) {
+                    res.sendError(HttpServletResponse.SC_FORBIDDEN, "Accesso negato");
                     return;
                 }
-                // Let the request for the file proceed
                 chain.doFilter(request, response);
                 return;
             }
+
 
             if (uri.startsWith(context + "/GetTrackData")) {
                 String idStr = req.getParameter("track_id");
